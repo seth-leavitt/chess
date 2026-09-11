@@ -261,8 +261,23 @@ public class ChessPiece {
         return null;    }
 
     private Collection<ChessMove> kingMoves(ChessBoard board, ChessPosition myPosition) {
-        System.out.println(this);
-        return null;
+        int row = myPosition.getRow();
+        int col = myPosition.getColumn();
+
+        Collection<ChessMove> possible_moves = new ArrayList<>();
+
+        for (int i = row - 1; i <= row + 1; i++){ // searching the whole range of possibilities
+            for (int j = col - 1; j <= col + 1; j++){
+                if ((i <= 8 && i >= 1) && (j <= 8 && j >= 1)){ // if it's a real board spot...
+                    ChessPosition new_position = new ChessPosition(i, j);
+                    if(board.getPiece(new_position) == null || opposing_team(board, new_position)){
+                        ChessMove new_move = new ChessMove(myPosition, new_position, null);
+                        possible_moves.add(new_move);
+                    }
+                }
+            }
+        }
+        return possible_moves;
     }
 
     private Collection<ChessMove> queenMoves(ChessBoard board, ChessPosition myPosition) {
