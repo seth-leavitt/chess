@@ -59,4 +59,9 @@ public class ChessMove {
     public int hashCode() {
         return Objects.hash(startPosition, endPosition, promotionPiece);
     }
+
+    @Override
+    public String toString(){
+        return "Move from: " + this.startPosition + " to " + this.endPosition;
+    }
 }
