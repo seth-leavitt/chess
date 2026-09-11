@@ -341,8 +341,45 @@ public class ChessPiece {
     }
 
     private Collection<ChessMove> knightMoves(ChessBoard board, ChessPosition myPosition) {
-        System.out.println(this);
-        return null;    }
+        int row = myPosition.getRow();
+        int col = myPosition.getColumn();
+
+        Collection<ChessMove> possible_moves = new ArrayList<>();
+
+        // up/down
+        int magnitude = 2;
+        for (int i = -1; i <= 1; i++){
+            //left/right
+            for (int j = -1; j <= 1; j++){
+                if (i != 0 && j != 0){
+                    ChessPosition newPosition = new ChessPosition(row+i*magnitude, col + j);
+                    if((row+i*magnitude >= 1 && row+i*magnitude <= 8) && (col+j >= 1 && col+j <= 8)) {
+                        if (opposing_team(board, newPosition) || free_space(board, newPosition)) {
+                            ChessMove newMove = new ChessMove(myPosition, newPosition, null);
+                            possible_moves.add(newMove);
+                        }
+                    }
+                }
+            }
+        }
+        // left/right
+        for (int i = -1; i <= 1; i++){
+            // up/down
+            for (int j = -1; j <= 1; j++){
+                if (i != 0 && j != 0){
+                    ChessPosition newPosition = new ChessPosition(row + j, col + i*magnitude);
+                    if((row+j >= 1 && row+j <= 8) && (col+i*magnitude >= 1 && col+i*magnitude <= 8)) {
+                        if (opposing_team(board, newPosition) || free_space(board, newPosition)) {
+                            ChessMove newMove = new ChessMove(myPosition, newPosition, null);
+                            possible_moves.add(newMove);
+                        }
+                    }
+                }
+            }
+        }
+
+        return possible_moves;
+    }
 
     private Collection<ChessMove> kingMoves(ChessBoard board, ChessPosition myPosition) {
         int row = myPosition.getRow();
@@ -379,5 +416,9 @@ public class ChessPiece {
             return false;
         }
         return board.getPiece(new_position).getTeamColor() != this.getTeamColor();
+    }
+
+    private boolean free_space(ChessBoard board, ChessPosition new_position){
+        return board.getPiece(new_position) == null;
     }
 }
