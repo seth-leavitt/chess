@@ -98,23 +98,87 @@ public class ChessPiece {
         int row = myPosition.getRow();
         int col = myPosition.getColumn();
 
+        int pawnDirection;
+        int pawnPromotionRow;
+
+        if (this.getTeamColor() == ChessGame.TeamColor.WHITE){
+            pawnDirection = 1;
+            pawnPromotionRow = 8;
+        } else {
+            pawnDirection = -1;
+            pawnPromotionRow = 1;
+        }
+
         Collection<ChessMove> possible_moves = new ArrayList<>();
 
         // one move forward
-        ChessPosition new_position = new ChessPosition(row + 1, col);
-        ChessMove new_move = new ChessMove(myPosition, new_position, null);
-        possible_moves.add(new_move);
+        ChessPosition new_position = new ChessPosition(row + pawnDirection, col);
+        if (board.getPiece(new_position) == null){
+            ChessMove new_move = new ChessMove(myPosition, new_position, null);
+            if (row + pawnDirection == pawnPromotionRow){
+                possible_moves.addAll(pawnPromotionMoves(myPosition, new_position));
+            } else {
+                possible_moves.add(new_move);
+            }
+        }
 
         // double move from starting spot
         if ((myPosition.getRow() == 2 && this.getTeamColor() == ChessGame.TeamColor.WHITE) || (myPosition.getRow() == 7 && this.getTeamColor() == ChessGame.TeamColor.BLACK)){
-            ChessPosition new_position_2 = new ChessPosition(row + 2, col);
-            ChessMove new_move_2 = new ChessMove(myPosition, new_position_2, null);
-            possible_moves.add(new_move);
+            ChessPosition new_position_2 = new ChessPosition(row + (2*pawnDirection), col);
+            if (board.getPiece(new_position_2) == null && (board.getPiece(new_position) == null)) {
+                ChessMove new_move_2 = new ChessMove(myPosition, new_position_2, null);
+                possible_moves.add(new_move_2);
+            }
         }
 
         // captures
+        if (col - 1 >= 1){ // pawn is legally allowed to move left
+            ChessPosition capture_position_left = new ChessPosition(row + pawnDirection, col - 1);
+            if (opposing_team(board, capture_position_left) && (row + pawnDirection != pawnPromotionRow)){
+                // capture to the left but don't promote
+                ChessMove capture_left = new ChessMove(myPosition, capture_position_left, null);
+                possible_moves.add(capture_left);
+            }
+            else if (opposing_team(board, capture_position_left) && (row + pawnDirection == pawnPromotionRow)){
+                possible_moves.addAll(pawnPromotionMoves(myPosition, capture_position_left));
+            }
+        }
+        if (col + 1 <= 8){ // pawn is legally allowed to move right
+            ChessPosition capture_position_right = new ChessPosition(row + pawnDirection, col + 1);
+            if (opposing_team(board, capture_position_right) && (row + pawnDirection != pawnPromotionRow)){
+                // capture to the right but don't promote
+                ChessMove capture_right = new ChessMove(myPosition, capture_position_right, null);
+                possible_moves.add(capture_right);
+            }
+            else if (opposing_team(board, capture_position_right) && (row + pawnDirection == pawnPromotionRow)){
+                // capture to the left and add all the promotion options
+                possible_moves.addAll(pawnPromotionMoves(myPosition, capture_position_right));
+            }
+        }
 
         // promotion
+
+        return possible_moves;
+    }
+
+    private Collection<ChessMove> pawnPromotionMoves(ChessPosition myPosition, ChessPosition new_position){
+        Collection<ChessMove> possible_moves = new ArrayList<>();
+
+        // rook
+        ChessMove capture_left_rook = new ChessMove(myPosition, new_position, PieceType.ROOK);
+        possible_moves.add(capture_left_rook);
+
+        // knight
+        ChessMove capture_left_knight = new ChessMove(myPosition, new_position, PieceType.KNIGHT);
+        possible_moves.add(capture_left_knight);
+
+        // bishop
+        ChessMove capture_left_bishop = new ChessMove(myPosition, new_position, PieceType.BISHOP);
+        possible_moves.add(capture_left_bishop);
+
+        // queen
+        ChessMove capture_left_queen = new ChessMove(myPosition, new_position, PieceType.QUEEN);
+        possible_moves.add(capture_left_queen);
 
         return possible_moves;
     }
@@ -311,6 +375,9 @@ public class ChessPiece {
     }
 
     private boolean opposing_team(ChessBoard board, ChessPosition new_position){
+        if (board.getPiece(new_position) == null){
+            return false;
+        }
         return board.getPiece(new_position).getTeamColor() != this.getTeamColor();
     }
 }
