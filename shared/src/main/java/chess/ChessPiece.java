@@ -14,10 +14,12 @@ public class ChessPiece {
 
     private PieceType type;
     private ChessGame.TeamColor pieceColor;
+    private boolean unmoved;
 
     public ChessPiece(ChessGame.TeamColor pieceColor, ChessPiece.PieceType type) {
         this.type = type;
         this.pieceColor = pieceColor;
+        this.unmoved = true;
     }
 
     @Override
@@ -98,12 +100,84 @@ public class ChessPiece {
     }
 
     private Collection<ChessMove> bishopMoves(ChessBoard board, ChessPosition myPosition) {
-        System.out.println(this);
-        return null;
+        int row = myPosition.getRow();
+        int col = myPosition.getColumn();
+
+        Collection<ChessMove> possible_moves = new ArrayList<>();
+
+        //moving up-left
+        for(int i = 1; (row + i <= 8 && col - i >= 1); i++){
+            ChessPosition new_position = new ChessPosition(row + i, col - i);
+            if(board.getPiece(new_position) == null) {
+                // now that we now that this move is possible, we can make a move out of it
+                ChessMove new_move = new ChessMove(myPosition, new_position, null);
+                possible_moves.add(new_move);
+            } else {
+                // we need to check to see if we can capture, but we can't go further up
+                if(opposing_team(board, new_position)){
+                    // we can capture!
+                    ChessMove new_move = new ChessMove(myPosition, new_position, null);
+                    possible_moves.add(new_move);
+                }
+                break;
+            }
+        }
+        // try moving up-right
+        for(int i = 1; (row + i <= 8 && col + i <= 8); i++){
+            ChessPosition new_position = new ChessPosition(row + i, col + i);
+            if(board.getPiece(new_position) == null) {
+                // now that we now that this move is possible, we can make a move out of it
+                ChessMove new_move = new ChessMove(myPosition, new_position, null);
+                possible_moves.add(new_move);
+            } else {
+                // we need to check to see if we can capture, but we can't go further up
+                if(opposing_team(board, new_position)){
+                    // we can capture!
+                    ChessMove new_move = new ChessMove(myPosition, new_position, null);
+                    possible_moves.add(new_move);
+                }
+                break;
+            }
+        }
+        // try moving down-left
+        for(int i = 1; (row - i >= 1 && col - i >= 1); i++){
+            ChessPosition new_position = new ChessPosition(row - i, col - i);
+            if(board.getPiece(new_position) == null) {
+                // now that we now that this move is possible, we can make a move out of it
+                ChessMove new_move = new ChessMove(myPosition, new_position, null);
+                possible_moves.add(new_move);
+            } else {
+                // we need to check to see if we can capture, but we can't go further up
+                if(opposing_team(board, new_position)){
+                    // we can capture!
+                    ChessMove new_move = new ChessMove(myPosition, new_position, null);
+                    possible_moves.add(new_move);
+                }
+                break;
+            }
+        }
+        // try moving down-right
+        for(int i = 1; (row - i >= 1 && col + i <= 8); i++){
+            ChessPosition new_position = new ChessPosition(row - i, col + i);
+            if(board.getPiece(new_position) == null) {
+                // now that we now that this move is possible, we can make a move out of it
+                ChessMove new_move = new ChessMove(myPosition, new_position, null);
+                possible_moves.add(new_move);
+            } else {
+                // we need to check to see if we can capture, but we can't go further up
+                if(opposing_team(board, new_position)){
+                    // we can capture!
+                    ChessMove new_move = new ChessMove(myPosition, new_position, null);
+                    possible_moves.add(new_move);
+                }
+                break;
+            }
+        }
+        // we've now collected all the bishop moves
+        return possible_moves;
     }
 
     private Collection<ChessMove> rookMoves(ChessBoard board, ChessPosition myPosition) {
-        System.out.println(this);
         int row = myPosition.getRow();
         int col = myPosition.getColumn();
 
@@ -118,7 +192,7 @@ public class ChessPiece {
                 possible_moves.add(new_move);
             } else {
                 // we need to check to see if we can capture, but we can't go further up
-                if(board.getPiece(new_position).getTeamColor() != this.getTeamColor()){
+                if(opposing_team(board, new_position)){
                     // we can capture!
                     ChessMove new_move = new ChessMove(myPosition, new_position, null);
                     possible_moves.add(new_move);
@@ -135,7 +209,7 @@ public class ChessPiece {
                 possible_moves.add(new_move);
             } else {
                 // we need to check to see if we can capture, but we can't go further up
-                if(board.getPiece(new_position).getTeamColor() != this.getTeamColor()){
+                if(opposing_team(board, new_position)){
                     // we can capture!
                     ChessMove new_move = new ChessMove(myPosition, new_position, null);
                     possible_moves.add(new_move);
@@ -152,7 +226,7 @@ public class ChessPiece {
                 possible_moves.add(new_move);
             } else {
                 // we need to check to see if we can capture, but we can't go further up
-                if(board.getPiece(new_position).getTeamColor() != this.getTeamColor()){
+                if(opposing_team(board, new_position)){
                     // we can capture!
                     ChessMove new_move = new ChessMove(myPosition, new_position, null);
                     possible_moves.add(new_move);
@@ -169,7 +243,7 @@ public class ChessPiece {
                 possible_moves.add(new_move);
             } else {
                 // we need to check to see if we can capture, but we can't go further up
-                if(board.getPiece(new_position).getTeamColor() != this.getTeamColor()){
+                if(opposing_team(board, new_position)){
                     // we can capture!
                     ChessMove new_move = new ChessMove(myPosition, new_position, null);
                     possible_moves.add(new_move);
@@ -192,7 +266,16 @@ public class ChessPiece {
     }
 
     private Collection<ChessMove> queenMoves(ChessBoard board, ChessPosition myPosition) {
-        System.out.println(this);
-        return null;
+        Collection<ChessMove> possible_moves = new ArrayList<>();
+
+        // the queen is just the combo of the rook and the bishop
+        possible_moves.addAll(bishopMoves(board, myPosition));
+        possible_moves.addAll(rookMoves(board, myPosition));
+
+        return possible_moves;
+    }
+
+    private boolean opposing_team(ChessBoard board, ChessPosition new_position){
+        return board.getPiece(new_position).getTeamColor() != this.getTeamColor();
     }
 }
