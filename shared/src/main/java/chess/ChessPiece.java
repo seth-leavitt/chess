@@ -95,8 +95,28 @@ public class ChessPiece {
     }
 
     private Collection<ChessMove> pawnMoves(ChessBoard board, ChessPosition myPosition) {
-        System.out.println(this);
-        return null;
+        int row = myPosition.getRow();
+        int col = myPosition.getColumn();
+
+        Collection<ChessMove> possible_moves = new ArrayList<>();
+
+        // one move forward
+        ChessPosition new_position = new ChessPosition(row + 1, col);
+        ChessMove new_move = new ChessMove(myPosition, new_position, null);
+        possible_moves.add(new_move);
+
+        // double move from starting spot
+        if ((myPosition.getRow() == 2 && this.getTeamColor() == ChessGame.TeamColor.WHITE) || (myPosition.getRow() == 7 && this.getTeamColor() == ChessGame.TeamColor.BLACK)){
+            ChessPosition new_position_2 = new ChessPosition(row + 2, col);
+            ChessMove new_move_2 = new ChessMove(myPosition, new_position_2, null);
+            possible_moves.add(new_move);
+        }
+
+        // captures
+
+        // promotion
+
+        return possible_moves;
     }
 
     private Collection<ChessMove> bishopMoves(ChessBoard board, ChessPosition myPosition) {
