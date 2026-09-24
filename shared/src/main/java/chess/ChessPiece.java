@@ -2,7 +2,6 @@ package chess;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Locale;
 import java.util.Objects;
 
 /**
@@ -13,8 +12,8 @@ import java.util.Objects;
  */
 public class ChessPiece {
 
-    private ChessGame.TeamColor color;
-    private PieceType type;
+    private final ChessGame.TeamColor color;
+    private final PieceType type;
 
     public ChessPiece(ChessGame.TeamColor pieceColor, ChessPiece.PieceType type) {
         this.color = pieceColor;
@@ -35,18 +34,14 @@ public class ChessPiece {
         String value = "";
 
         switch(this.type){
-            case KING:
-                value = "k";
-            case QUEEN:
-                value = "q";
-            case BISHOP:
-                value = "b";
-            case KNIGHT:
-                value = "n";
-            case ROOK:
-                value = "r";
-            case PAWN:
-                value = "p";
+            case KING -> value = "k";
+            case QUEEN -> value = "q";
+            case BISHOP -> value = "b";
+            case KNIGHT -> value = "n";
+            case ROOK -> value = "r";
+            case PAWN -> value = "p";
+
+
         }
         if(this.color == ChessGame.TeamColor.WHITE){
             return value.toUpperCase();
@@ -215,31 +210,31 @@ public class ChessPiece {
         // basic move
         ChessPosition basicNewPosition = new ChessPosition(start_row + direction, start_col);
         if (isFree(board, basicNewPosition)) {
-            possibleMoves.addAll(addPawnMoves(board, myPosition, basicNewPosition));
+            possibleMoves.addAll(addPawnMoves(myPosition, basicNewPosition));
         }
 
         // double move
         ChessPosition doubleNewPosition = new ChessPosition(start_row + 2*direction, start_col);
         if (isFree(board, basicNewPosition) && isFree(board, doubleNewPosition) && (start_row == 7 || start_row == 2)) {
-            possibleMoves.addAll(addPawnMoves(board, myPosition, doubleNewPosition));
+            possibleMoves.addAll(addPawnMoves(myPosition, doubleNewPosition));
         }
 
         // capture left
         ChessPosition captureLeftPosition = new ChessPosition(start_row + direction, start_col-1);
         if(canCapture(board, captureLeftPosition)){
-            possibleMoves.addAll(addPawnMoves(board, myPosition, captureLeftPosition));
+            possibleMoves.addAll(addPawnMoves(myPosition, captureLeftPosition));
         }
 
         //capture right
         ChessPosition captureRightPosition = new ChessPosition(start_row + direction, start_col+1);
         if(canCapture(board, captureRightPosition)){
-            possibleMoves.addAll(addPawnMoves(board, myPosition, captureRightPosition));
+            possibleMoves.addAll(addPawnMoves(myPosition, captureRightPosition));
         }
 
         return possibleMoves;
     }
 
-    private Collection<ChessMove> addPawnMoves(ChessBoard board, ChessPosition myPosition, ChessPosition newPosition){
+    private Collection<ChessMove> addPawnMoves(ChessPosition myPosition, ChessPosition newPosition){
         Collection<ChessMove> possibleMoves = new ArrayList<>();
 
         int new_row = newPosition.getRow();
