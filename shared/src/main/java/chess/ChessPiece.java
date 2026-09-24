@@ -2,6 +2,7 @@ package chess;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Locale;
 import java.util.Objects;
 
 /**
@@ -12,14 +13,12 @@ import java.util.Objects;
  */
 public class ChessPiece {
 
+    private ChessGame.TeamColor color;
     private PieceType type;
-    private ChessGame.TeamColor pieceColor;
-    private boolean unmoved;
 
     public ChessPiece(ChessGame.TeamColor pieceColor, ChessPiece.PieceType type) {
+        this.color = pieceColor;
         this.type = type;
-        this.pieceColor = pieceColor;
-        this.unmoved = true;
     }
 
     @Override
@@ -28,25 +27,37 @@ public class ChessPiece {
             return false;
         }
         ChessPiece that = (ChessPiece) o;
-        return type == that.type && pieceColor == that.pieceColor;
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(type, pieceColor);
+        return color == that.color && type == that.type;
     }
 
     @Override
     public String toString(){
-        switch (this.type){
-            case KING -> {return "K";}
-            case QUEEN -> {return "Q";}
-            case ROOK -> {return "R";}
-            case KNIGHT -> {return "K";}
-            case BISHOP -> {return "B";}
-            case PAWN -> {return "P";}
+        String value = "";
+
+        switch(this.type){
+            case KING:
+                value = "k";
+            case QUEEN:
+                value = "q";
+            case BISHOP:
+                value = "b";
+            case KNIGHT:
+                value = "n";
+            case ROOK:
+                value = "r";
+            case PAWN:
+                value = "p";
         }
-        return "#";
+        if(this.color == ChessGame.TeamColor.WHITE){
+            return value.toUpperCase();
+        } else {
+            return value.toLowerCase();
+        }
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(color, type);
     }
 
     /**
@@ -65,7 +76,7 @@ public class ChessPiece {
      * @return Which team this chess piece belongs to
      */
     public ChessGame.TeamColor getTeamColor() {
-        return this.pieceColor;
+        return this.color;
     }
 
     /**
@@ -83,342 +94,185 @@ public class ChessPiece {
      * @return Collection of valid moves
      */
     public Collection<ChessMove> pieceMoves(ChessBoard board, ChessPosition myPosition) {
-        switch (this.type){
-            case KING -> {return kingMoves(board, myPosition);}
-            case QUEEN -> {return queenMoves(board, myPosition);}
-            case ROOK -> {return rookMoves(board, myPosition);}
-            case KNIGHT -> {return knightMoves(board, myPosition);}
-            case BISHOP -> {return bishopMoves(board, myPosition);}
-            case PAWN -> {return pawnMoves(board, myPosition);}
-        }
-        return null;
+        return switch (this.type) {
+            case KING -> kingMoves(board, myPosition);
+            case QUEEN -> queenMoves(board, myPosition);
+            case ROOK -> rookMoves(board, myPosition);
+            case BISHOP -> bishopMoves(board, myPosition);
+            case KNIGHT -> knightMoves(board, myPosition);
+            case PAWN -> pawnMoves(board, myPosition);
+        };
     }
 
-    private Collection<ChessMove> pawnMoves(ChessBoard board, ChessPosition myPosition) {
-        int row = myPosition.getRow();
-        int col = myPosition.getColumn();
+    private Collection<ChessMove> kingMoves(ChessBoard board, ChessPosition myPosition){
+        int col_start = myPosition.getColumn();
+        int row_start = myPosition.getRow();
 
-        int pawnDirection;
-        int pawnPromotionRow;
-
-        if (this.getTeamColor() == ChessGame.TeamColor.WHITE){
-            pawnDirection = 1;
-            pawnPromotionRow = 8;
-        } else {
-            pawnDirection = -1;
-            pawnPromotionRow = 1;
-        }
-
-        Collection<ChessMove> possible_moves = new ArrayList<>();
-
-        // one move forward
-        ChessPosition new_position = new ChessPosition(row + pawnDirection, col);
-        if (board.getPiece(new_position) == null){
-            ChessMove new_move = new ChessMove(myPosition, new_position, null);
-            if (row + pawnDirection == pawnPromotionRow){
-                possible_moves.addAll(pawnPromotionMoves(myPosition, new_position));
-            } else {
-                possible_moves.add(new_move);
+        Collection<ChessMove> possibleMoves = new ArrayList<>();
+        int[][] directions = {{1,1}, {1,0}, {1,-1}, {0,1}, {0,-1}, {-1, 1}, {-1, 0}, {-1,-1}};
+        for (int[] direction : directions) {
+            ChessPosition newPosition = new ChessPosition(row_start + direction[0], col_start + direction[1]);
+            if(isFree(board, newPosition)){
+                ChessMove newMove = new ChessMove(myPosition, newPosition, null);
+                possibleMoves.add(newMove);
+            }else{
+                if(canCapture(board, newPosition)){
+                    ChessMove newMove = new ChessMove(myPosition, newPosition, null);
+                    possibleMoves.add(newMove);
+                }
             }
         }
-
-        // double move from starting spot
-        if ((myPosition.getRow() == 2 && this.getTeamColor() == ChessGame.TeamColor.WHITE) || (myPosition.getRow() == 7 && this.getTeamColor() == ChessGame.TeamColor.BLACK)){
-            ChessPosition new_position_2 = new ChessPosition(row + (2*pawnDirection), col);
-            if (board.getPiece(new_position_2) == null && (board.getPiece(new_position) == null)) {
-                ChessMove new_move_2 = new ChessMove(myPosition, new_position_2, null);
-                possible_moves.add(new_move_2);
-            }
-        }
-
-        // captures
-        if (col - 1 >= 1){ // pawn is legally allowed to move left
-            ChessPosition capture_position_left = new ChessPosition(row + pawnDirection, col - 1);
-            if (opposing_team(board, capture_position_left) && (row + pawnDirection != pawnPromotionRow)){
-                // capture to the left but don't promote
-                ChessMove capture_left = new ChessMove(myPosition, capture_position_left, null);
-                possible_moves.add(capture_left);
-            }
-            else if (opposing_team(board, capture_position_left) && (row + pawnDirection == pawnPromotionRow)){
-                possible_moves.addAll(pawnPromotionMoves(myPosition, capture_position_left));
-            }
-        }
-        if (col + 1 <= 8){ // pawn is legally allowed to move right
-            ChessPosition capture_position_right = new ChessPosition(row + pawnDirection, col + 1);
-            if (opposing_team(board, capture_position_right) && (row + pawnDirection != pawnPromotionRow)){
-                // capture to the right but don't promote
-                ChessMove capture_right = new ChessMove(myPosition, capture_position_right, null);
-                possible_moves.add(capture_right);
-            }
-            else if (opposing_team(board, capture_position_right) && (row + pawnDirection == pawnPromotionRow)){
-                // capture to the left and add all the promotion options
-                possible_moves.addAll(pawnPromotionMoves(myPosition, capture_position_right));
-            }
-        }
-
-        // promotion
-
-        return possible_moves;
+        return possibleMoves;
     }
 
-    private Collection<ChessMove> pawnPromotionMoves(ChessPosition myPosition, ChessPosition new_position){
-        Collection<ChessMove> possible_moves = new ArrayList<>();
+    private Collection<ChessMove> queenMoves(ChessBoard board, ChessPosition myPosition){
+        Collection<ChessMove> possibleMoves = new ArrayList<>();
 
-        // rook
-        ChessMove capture_left_rook = new ChessMove(myPosition, new_position, PieceType.ROOK);
-        possible_moves.add(capture_left_rook);
+        // just composite the two movesets.
+        possibleMoves.addAll(rookMoves(board, myPosition));
+        possibleMoves.addAll(bishopMoves(board, myPosition));
 
-        // knight
-        ChessMove capture_left_knight = new ChessMove(myPosition, new_position, PieceType.KNIGHT);
-        possible_moves.add(capture_left_knight);
-
-        // bishop
-        ChessMove capture_left_bishop = new ChessMove(myPosition, new_position, PieceType.BISHOP);
-        possible_moves.add(capture_left_bishop);
-
-        // queen
-        ChessMove capture_left_queen = new ChessMove(myPosition, new_position, PieceType.QUEEN);
-        possible_moves.add(capture_left_queen);
-
-        return possible_moves;
+        return possibleMoves;
     }
 
-    private Collection<ChessMove> bishopMoves(ChessBoard board, ChessPosition myPosition) {
-        int row = myPosition.getRow();
-        int col = myPosition.getColumn();
-
-        Collection<ChessMove> possible_moves = new ArrayList<>();
-
-        //moving up-left
-        for(int i = 1; (row + i <= 8 && col - i >= 1); i++){
-            ChessPosition new_position = new ChessPosition(row + i, col - i);
-            if(board.getPiece(new_position) == null) {
-                // now that we now that this move is possible, we can make a move out of it
-                ChessMove new_move = new ChessMove(myPosition, new_position, null);
-                possible_moves.add(new_move);
-            } else {
-                // we need to check to see if we can capture, but we can't go further up
-                if(opposing_team(board, new_position)){
-                    // we can capture!
-                    ChessMove new_move = new ChessMove(myPosition, new_position, null);
-                    possible_moves.add(new_move);
-                }
-                break;
-            }
-        }
-        // try moving up-right
-        for(int i = 1; (row + i <= 8 && col + i <= 8); i++){
-            ChessPosition new_position = new ChessPosition(row + i, col + i);
-            if(board.getPiece(new_position) == null) {
-                // now that we now that this move is possible, we can make a move out of it
-                ChessMove new_move = new ChessMove(myPosition, new_position, null);
-                possible_moves.add(new_move);
-            } else {
-                // we need to check to see if we can capture, but we can't go further up
-                if(opposing_team(board, new_position)){
-                    // we can capture!
-                    ChessMove new_move = new ChessMove(myPosition, new_position, null);
-                    possible_moves.add(new_move);
-                }
-                break;
-            }
-        }
-        // try moving down-left
-        for(int i = 1; (row - i >= 1 && col - i >= 1); i++){
-            ChessPosition new_position = new ChessPosition(row - i, col - i);
-            if(board.getPiece(new_position) == null) {
-                // now that we now that this move is possible, we can make a move out of it
-                ChessMove new_move = new ChessMove(myPosition, new_position, null);
-                possible_moves.add(new_move);
-            } else {
-                // we need to check to see if we can capture, but we can't go further up
-                if(opposing_team(board, new_position)){
-                    // we can capture!
-                    ChessMove new_move = new ChessMove(myPosition, new_position, null);
-                    possible_moves.add(new_move);
-                }
-                break;
-            }
-        }
-        // try moving down-right
-        for(int i = 1; (row - i >= 1 && col + i <= 8); i++){
-            ChessPosition new_position = new ChessPosition(row - i, col + i);
-            if(board.getPiece(new_position) == null) {
-                // now that we now that this move is possible, we can make a move out of it
-                ChessMove new_move = new ChessMove(myPosition, new_position, null);
-                possible_moves.add(new_move);
-            } else {
-                // we need to check to see if we can capture, but we can't go further up
-                if(opposing_team(board, new_position)){
-                    // we can capture!
-                    ChessMove new_move = new ChessMove(myPosition, new_position, null);
-                    possible_moves.add(new_move);
-                }
-                break;
-            }
-        }
-        // we've now collected all the bishop moves
-        return possible_moves;
-    }
-
-    private Collection<ChessMove> rookMoves(ChessBoard board, ChessPosition myPosition) {
-        int row = myPosition.getRow();
-        int col = myPosition.getColumn();
-
-        Collection<ChessMove> possible_moves = new ArrayList<>();
-
-        // try moving up
-        for(int i = row + 1; i <= 8; i++){
-            ChessPosition new_position = new ChessPosition(i, col);
-            if(board.getPiece(new_position) == null) {
-                // now that we now that this move is possible, we can make a move out of it
-                ChessMove new_move = new ChessMove(myPosition, new_position, null);
-                possible_moves.add(new_move);
-            } else {
-                // we need to check to see if we can capture, but we can't go further up
-                if(opposing_team(board, new_position)){
-                    // we can capture!
-                    ChessMove new_move = new ChessMove(myPosition, new_position, null);
-                    possible_moves.add(new_move);
-                }
-                break;
-            }
-        }
-        // try moving down
-        for(int i = row - 1; i >= 1; i--){
-            ChessPosition new_position = new ChessPosition(i, col);
-            if(board.getPiece(new_position) == null) {
-                // now that we now that this move is possible, we can make a move out of it
-                ChessMove new_move = new ChessMove(myPosition, new_position, null);
-                possible_moves.add(new_move);
-            } else {
-                // we need to check to see if we can capture, but we can't go further up
-                if(opposing_team(board, new_position)){
-                    // we can capture!
-                    ChessMove new_move = new ChessMove(myPosition, new_position, null);
-                    possible_moves.add(new_move);
-                }
-                break;
-            }
-        }
-        // try moving left
-        for(int i = col - 1; i >= 1; i--){
-            ChessPosition new_position = new ChessPosition(row, i);
-            if(board.getPiece(new_position) == null) {
-                // now that we now that this move is possible, we can make a move out of it
-                ChessMove new_move = new ChessMove(myPosition, new_position, null);
-                possible_moves.add(new_move);
-            } else {
-                // we need to check to see if we can capture, but we can't go further up
-                if(opposing_team(board, new_position)){
-                    // we can capture!
-                    ChessMove new_move = new ChessMove(myPosition, new_position, null);
-                    possible_moves.add(new_move);
-                }
-                break;
-            }
-        }
-        // try moving right
-        for(int i = col + 1; i <= 8; i++){
-            ChessPosition new_position = new ChessPosition(row, i);
-            if(board.getPiece(new_position) == null) {
-                // now that we now that this move is possible, we can make a move out of it
-                ChessMove new_move = new ChessMove(myPosition, new_position, null);
-                possible_moves.add(new_move);
-            } else {
-                // we need to check to see if we can capture, but we can't go further up
-                if(opposing_team(board, new_position)){
-                    // we can capture!
-                    ChessMove new_move = new ChessMove(myPosition, new_position, null);
-                    possible_moves.add(new_move);
-                }
-                break;
-            }
-        }
-
-        // we've now collected all the rook moves
-        return possible_moves;
-    }
-
-    private Collection<ChessMove> knightMoves(ChessBoard board, ChessPosition myPosition) {
-        int row = myPosition.getRow();
-        int col = myPosition.getColumn();
-
-        Collection<ChessMove> possible_moves = new ArrayList<>();
-
-        // up/down
-        int magnitude = 2;
-        for (int i = -1; i <= 1; i++){
-            //left/right
-            for (int j = -1; j <= 1; j++){
-                if (i != 0 && j != 0){
-                    ChessPosition newPosition = new ChessPosition(row+i*magnitude, col + j);
-                    if((row+i*magnitude >= 1 && row+i*magnitude <= 8) && (col+j >= 1 && col+j <= 8)) {
-                        if (opposing_team(board, newPosition) || free_space(board, newPosition)) {
-                            ChessMove newMove = new ChessMove(myPosition, newPosition, null);
-                            possible_moves.add(newMove);
-                        }
+    private Collection<ChessMove> rookMoves(ChessBoard board, ChessPosition myPosition){
+        int col_start = myPosition.getColumn();
+        int row_start = myPosition.getRow();
+        Collection<ChessMove> possibleMoves = new ArrayList<>();
+        int[][] directions = {{1,0}, {-1,0}, {0,1}, {0,-1}};
+        for (int[] direction : directions) {
+            for(int x = 1; x <= 8 && x >= 1; x++){
+                ChessPosition newPosition = new ChessPosition(row_start + x*direction[0], col_start + x*direction[1]);
+                if(isFree(board, newPosition)){
+                    ChessMove newMove = new ChessMove(myPosition, newPosition, null);
+                    possibleMoves.add(newMove);
+                }else{
+                    if(canCapture(board, newPosition)){
+                        ChessMove newMove = new ChessMove(myPosition, newPosition, null);
+                        possibleMoves.add(newMove);
                     }
+                    break;
                 }
             }
         }
-        // left/right
-        for (int i = -1; i <= 1; i++){
-            // up/down
-            for (int j = -1; j <= 1; j++){
-                if (i != 0 && j != 0){
-                    ChessPosition newPosition = new ChessPosition(row + j, col + i*magnitude);
-                    if((row+j >= 1 && row+j <= 8) && (col+i*magnitude >= 1 && col+i*magnitude <= 8)) {
-                        if (opposing_team(board, newPosition) || free_space(board, newPosition)) {
-                            ChessMove newMove = new ChessMove(myPosition, newPosition, null);
-                            possible_moves.add(newMove);
-                        }
+        return possibleMoves;
+    }
+
+    private Collection<ChessMove> bishopMoves(ChessBoard board, ChessPosition myPosition){
+        int col_start = myPosition.getColumn();
+        int row_start = myPosition.getRow();
+        Collection<ChessMove> possibleMoves = new ArrayList<>();
+        int[][] directions = {{1,1}, {-1,-1}, {-1,1}, {1,-1}};
+        for (int[] direction : directions) {
+            for(int x = 1; x <= 8 && x >= 1; x++){
+                ChessPosition newPosition = new ChessPosition(row_start + x*direction[0], col_start + x*direction[1]);
+                if(isFree(board, newPosition)){
+                    ChessMove newMove = new ChessMove(myPosition, newPosition, null);
+                    possibleMoves.add(newMove);
+                }else{
+                    if(canCapture(board, newPosition)){
+                        ChessMove newMove = new ChessMove(myPosition, newPosition, null);
+                        possibleMoves.add(newMove);
                     }
+                    break;
                 }
             }
         }
-
-        return possible_moves;
+        return possibleMoves;
     }
 
-    private Collection<ChessMove> kingMoves(ChessBoard board, ChessPosition myPosition) {
-        int row = myPosition.getRow();
-        int col = myPosition.getColumn();
-
-        Collection<ChessMove> possible_moves = new ArrayList<>();
-
-        for (int i = row - 1; i <= row + 1; i++){ // searching the whole range of possibilities
-            for (int j = col - 1; j <= col + 1; j++){
-                if ((i <= 8 && i >= 1) && (j <= 8 && j >= 1)){ // if it's a real board spot...
-                    ChessPosition new_position = new ChessPosition(i, j);
-                    if(board.getPiece(new_position) == null || opposing_team(board, new_position)){
-                        ChessMove new_move = new ChessMove(myPosition, new_position, null);
-                        possible_moves.add(new_move);
-                    }
+    private Collection<ChessMove> knightMoves(ChessBoard board, ChessPosition myPosition){
+        int col_start = myPosition.getColumn();
+        int row_start = myPosition.getRow();
+        Collection<ChessMove> possibleMoves = new ArrayList<>();
+        int[][] directions = {{1,2}, {1,-2}, {-1, 2}, {-1, -2}, {2, 1}, {-2, 1}, {-2, -1}, {2, -1}};
+        for (int[] direction : directions) {
+            ChessPosition newPosition = new ChessPosition(row_start + direction[0], col_start + direction[1]);
+            if(isFree(board, newPosition)){
+                ChessMove newMove = new ChessMove(myPosition, newPosition, null);
+                possibleMoves.add(newMove);
+            }else{
+                if(canCapture(board, newPosition)){
+                    ChessMove newMove = new ChessMove(myPosition, newPosition, null);
+                    possibleMoves.add(newMove);
                 }
             }
         }
-        return possible_moves;
+        return possibleMoves;
     }
 
-    private Collection<ChessMove> queenMoves(ChessBoard board, ChessPosition myPosition) {
-        Collection<ChessMove> possible_moves = new ArrayList<>();
+    private Collection<ChessMove> pawnMoves(ChessBoard board, ChessPosition myPosition){
+        Collection<ChessMove> possibleMoves = new ArrayList<>();
 
-        // the queen is just the combo of the rook and the bishop
-        possible_moves.addAll(bishopMoves(board, myPosition));
-        possible_moves.addAll(rookMoves(board, myPosition));
+        int start_row = myPosition.getRow();
+        int start_col = myPosition.getColumn();
 
-        return possible_moves;
-    }
-
-    private boolean opposing_team(ChessBoard board, ChessPosition new_position){
-        if (board.getPiece(new_position) == null){
-            return false;
+        int direction = 1;
+        if (this.color == ChessGame.TeamColor.BLACK){
+            direction = -1;
         }
-        return board.getPiece(new_position).getTeamColor() != this.getTeamColor();
+
+        // basic move
+        ChessPosition basicNewPosition = new ChessPosition(start_row + direction, start_col);
+        if (isFree(board, basicNewPosition)) {
+            possibleMoves.addAll(addPawnMoves(board, myPosition, basicNewPosition));
+        }
+
+        // double move
+        ChessPosition doubleNewPosition = new ChessPosition(start_row + 2*direction, start_col);
+        if (isFree(board, basicNewPosition) && isFree(board, doubleNewPosition) && (start_row == 7 || start_row == 2)) {
+            possibleMoves.addAll(addPawnMoves(board, myPosition, doubleNewPosition));
+        }
+
+        // capture left
+        ChessPosition captureLeftPosition = new ChessPosition(start_row + direction, start_col-1);
+        if(canCapture(board, captureLeftPosition)){
+            possibleMoves.addAll(addPawnMoves(board, myPosition, captureLeftPosition));
+        }
+
+        //capture right
+        ChessPosition captureRightPosition = new ChessPosition(start_row + direction, start_col+1);
+        if(canCapture(board, captureRightPosition)){
+            possibleMoves.addAll(addPawnMoves(board, myPosition, captureRightPosition));
+        }
+
+        return possibleMoves;
     }
 
-    private boolean free_space(ChessBoard board, ChessPosition new_position){
-        return board.getPiece(new_position) == null;
+    private Collection<ChessMove> addPawnMoves(ChessBoard board, ChessPosition myPosition, ChessPosition newPosition){
+        Collection<ChessMove> possibleMoves = new ArrayList<>();
+
+        int new_row = newPosition.getRow();
+
+        if(new_row == 1 || new_row == 8){
+            possibleMoves.add(new ChessMove(myPosition, newPosition, PieceType.QUEEN));
+            possibleMoves.add(new ChessMove(myPosition, newPosition, PieceType.ROOK));
+            possibleMoves.add(new ChessMove(myPosition, newPosition, PieceType.BISHOP));
+            possibleMoves.add(new ChessMove(myPosition, newPosition, PieceType.KNIGHT));
+        }else{
+            possibleMoves.add(new ChessMove(myPosition, newPosition, null));
+        }
+
+        return possibleMoves;
     }
+
+    private boolean isFree(ChessBoard board, ChessPosition newPosition){
+        if (newPosition.getRow() >= 1 && newPosition.getRow() <= 8 && newPosition.getColumn() <= 8 && newPosition.getColumn() >= 1){
+            ChessPiece currentInhabitant = board.getPiece(newPosition);
+            return currentInhabitant == null;
+        }
+        return false;
+    }
+
+    private boolean canCapture(ChessBoard board, ChessPosition newPosition){
+        if(newPosition.getRow() >= 1 && newPosition.getRow() <= 8 && newPosition.getColumn() <= 8 && newPosition.getColumn() >=1){
+            ChessPiece currentInhabitant = board.getPiece(newPosition);
+            if (currentInhabitant == null){
+                return false;
+            }
+            return currentInhabitant.getTeamColor() != this.color;
+        }
+        return false;
+    }
+
 }
