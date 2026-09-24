@@ -1,5 +1,7 @@
 package chess;
+
 import java.util.Arrays;
+import java.util.Objects;
 
 /**
  * A chessboard that can hold and rearrange chess pieces.
@@ -15,12 +17,6 @@ public class ChessBoard {
 
     }
 
-    public static void main(String[] args){
-        ChessBoard chessBoard = new ChessBoard();
-        chessBoard.resetBoard();
-        System.out.println(chessBoard);
-    }
-
     /**
      * Adds a chess piece to the chessboard
      *
@@ -28,7 +24,10 @@ public class ChessBoard {
      * @param piece    the piece to add
      */
     public void addPiece(ChessPosition position, ChessPiece piece) {
-        this.board[position.getRow()][position.getColumn()] = piece;
+        int x = position.getColumn();
+        int y = position.getRow();
+
+        this.board[x][y] = piece;
     }
 
     /**
@@ -39,7 +38,10 @@ public class ChessBoard {
      * position
      */
     public ChessPiece getPiece(ChessPosition position) {
-        return this.board[position.getRow()][position.getColumn()];
+        int x = position.getColumn();
+        int y = position.getRow();
+
+        return this.board[x][y];
     }
 
     /**
@@ -47,87 +49,69 @@ public class ChessBoard {
      * (How the game of chess normally starts)
      */
     public void resetBoard() {
-        board = new ChessPiece[9][9];
-        this.setupBoard();
-    }
+        // reset the board
+        this.board = new ChessPiece[9][9];
 
-    private void setupBoard(){
-        //set up colors
+        // start adding pieces
+
+        // I don't want to type these a billion times.
         ChessGame.TeamColor white = ChessGame.TeamColor.WHITE;
         ChessGame.TeamColor black = ChessGame.TeamColor.BLACK;
 
-        // define piece types
-        ChessPiece.PieceType pawn = ChessPiece.PieceType.PAWN;
-        ChessPiece.PieceType rook = ChessPiece.PieceType.ROOK;
-        ChessPiece.PieceType knight = ChessPiece.PieceType.KNIGHT;
-        ChessPiece.PieceType bishop = ChessPiece.PieceType.BISHOP;
-        ChessPiece.PieceType queen = ChessPiece.PieceType.QUEEN;
-        ChessPiece.PieceType king = ChessPiece.PieceType.KING;
-
-        // create copies of all of the chess pieces that will be used on the board
-
-        // white
-        ChessPiece white_pawn = new ChessPiece(white, pawn);
-        ChessPiece white_rook = new ChessPiece(white, rook);
-        ChessPiece white_knight = new ChessPiece(white, knight);
-        ChessPiece white_bishop = new ChessPiece(white, bishop);
-        ChessPiece white_queen = new ChessPiece(white, queen);
-        ChessPiece white_king = new ChessPiece(white, king);
-
-        //black
-        ChessPiece black_pawn = new ChessPiece(black, pawn);
-        ChessPiece black_rook = new ChessPiece(black, rook);
-        ChessPiece black_knight = new ChessPiece(black, knight);
-        ChessPiece black_bishop = new ChessPiece(black, bishop);
-        ChessPiece black_queen = new ChessPiece(black, queen);
-        ChessPiece black_king = new ChessPiece(black, king);
-
-        // now we can place white
-        this.addPiece(new ChessPosition(1,1), white_rook);
-        this.addPiece(new ChessPosition(1,2), white_knight);
-        this.addPiece(new ChessPosition(1,3), white_bishop);
-        this.addPiece(new ChessPosition(1,4), white_queen);
-        this.addPiece(new ChessPosition(1,5), white_king);
-        this.addPiece(new ChessPosition(1, 6), white_bishop);
-        this.addPiece(new ChessPosition(1,7), white_knight);
-        this.addPiece(new ChessPosition(1, 8), white_rook);
-        // white pawns
-        for(int i = 1; i < 9; i++){
-            this.addPiece(new ChessPosition(2,i), white_pawn);
+        //pawns
+        for(int x = 1; x <=8; x++){
+            // white
+            addPiece(new ChessPosition(2, x), new ChessPiece(white, ChessPiece.PieceType.PAWN));
+            // black pawns
+            addPiece(new ChessPosition(7, x), new ChessPiece(black, ChessPiece.PieceType.PAWN));
         }
 
-        // now we can place black
-        this.addPiece(new ChessPosition(8,1), black_rook);
-        this.addPiece(new ChessPosition(8,2), black_knight);
-        this.addPiece(new ChessPosition(8,3), black_bishop);
-        this.addPiece(new ChessPosition(8,4), black_queen);
-        this.addPiece(new ChessPosition(8,5), black_king);
-        this.addPiece(new ChessPosition(8, 6), black_bishop);
-        this.addPiece(new ChessPosition(8,7), black_knight);
-        this.addPiece(new ChessPosition(8, 8), black_rook);
-        // black pawns
-        for(int i = 1; i < 9; i++){
-            this.addPiece(new ChessPosition(7,i), black_pawn);
-        }
+        // white ranked pieces
+        addPiece(new ChessPosition(1, 1), new ChessPiece(white, ChessPiece.PieceType.ROOK));
+        addPiece(new ChessPosition(1, 2), new ChessPiece(white, ChessPiece.PieceType.KNIGHT));
+        addPiece(new ChessPosition(1, 3), new ChessPiece(white, ChessPiece.PieceType.BISHOP));
+        addPiece(new ChessPosition(1, 4), new ChessPiece(white, ChessPiece.PieceType.QUEEN));
+        addPiece(new ChessPosition(1, 5), new ChessPiece(white, ChessPiece.PieceType.KING));
+        addPiece(new ChessPosition(1, 6), new ChessPiece(white, ChessPiece.PieceType.BISHOP));
+        addPiece(new ChessPosition(1, 7), new ChessPiece(white, ChessPiece.PieceType.KNIGHT));
+        addPiece(new ChessPosition(1, 8), new ChessPiece(white, ChessPiece.PieceType.ROOK));
+
+        // black ranked pieces
+        addPiece(new ChessPosition(8, 1), new ChessPiece(black, ChessPiece.PieceType.ROOK));
+        addPiece(new ChessPosition(8, 2), new ChessPiece(black, ChessPiece.PieceType.KNIGHT));
+        addPiece(new ChessPosition(8, 3), new ChessPiece(black, ChessPiece.PieceType.BISHOP));
+        addPiece(new ChessPosition(8, 4), new ChessPiece(black, ChessPiece.PieceType.QUEEN));
+        addPiece(new ChessPosition(8, 5), new ChessPiece(black, ChessPiece.PieceType.KING));
+        addPiece(new ChessPosition(8, 6), new ChessPiece(black, ChessPiece.PieceType.BISHOP));
+        addPiece(new ChessPosition(8, 7), new ChessPiece(black, ChessPiece.PieceType.KNIGHT));
+        addPiece(new ChessPosition(8, 8), new ChessPiece(black, ChessPiece.PieceType.ROOK));
+
+
 
     }
 
-    @Override
-    public String toString(){
-        String boardString = Arrays.deepToString(this.board);
-        return "chess.ChessBoard@"+boardString;
+    public static void main(String[] args) {
+        ChessBoard newBoard = new ChessBoard();
+        newBoard.resetBoard();
+        System.out.println(newBoard);
     }
 
     @Override
-    public boolean equals(Object o){
-        if(o==this){return true;}
-        if(o == null || o.getClass() != this.getClass()){return false;}
-        ChessBoard other = (ChessBoard) o;
-        return Arrays.deepEquals(this.board, other.board);
+    public boolean equals(Object o) {
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+        ChessBoard that = (ChessBoard) o;
+        return Objects.deepEquals(board, that.board);
     }
 
     @Override
     public int hashCode() {
         return Arrays.deepHashCode(board);
+    }
+
+    @Override
+    public String toString() {
+        return Arrays.deepToString(board);
     }
 }
