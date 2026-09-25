@@ -16,7 +16,7 @@ public class ChessGame {
     TeamColor current_turn = TeamColor.WHITE;
 
     public ChessGame() {
-
+        this.board.resetBoard();
     }
 
     /**
@@ -85,8 +85,9 @@ public class ChessGame {
     public void makeMove(ChessMove move) throws InvalidMoveException {
         ChessPosition start_position = move.getStartPosition();
         ChessPosition end_position = move.getEndPosition();
+        ChessPiece.PieceType promotion = move.getPromotionPiece();
 
-        TeamColor opponent_color = null;
+        TeamColor opponent_color;
         if (current_turn == TeamColor.BLACK){
             opponent_color = TeamColor.WHITE;
         } else {
@@ -96,7 +97,7 @@ public class ChessGame {
         ChessPiece moving_piece = this.board.getPiece(start_position);
 
         if (moving_piece == null){
-            return;
+            throw new InvalidMoveException("There is no piece here");
         }
 
         if (moving_piece.getTeamColor() != this.current_turn) {
@@ -109,6 +110,10 @@ public class ChessGame {
         }
 
         // if neither of these things are true, we're good to make the move
+        // but first we can promote if we have to
+        if (promotion != null){
+            moving_piece = new ChessPiece(current_turn, promotion);
+        }
         this.board.addPiece(start_position, null);
         this.board.addPiece(end_position, moving_piece);
 
