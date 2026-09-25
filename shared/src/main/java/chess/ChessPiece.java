@@ -15,7 +15,7 @@ public class ChessPiece {
     private final ChessGame.TeamColor color;
     private final PieceType type;
     private boolean en_passant_flag = false;
-    private boolean can_castle_flag = true;
+    private boolean castle_flag = true;
 
     public ChessPiece(ChessGame.TeamColor pieceColor, ChessPiece.PieceType type) {
         this.color = pieceColor;
@@ -56,6 +56,15 @@ public class ChessPiece {
     public int hashCode() {
         return Objects.hash(color, type);
     }
+
+    public boolean isEn_passant_flag() {
+        return en_passant_flag;
+    }
+
+    public boolean isCastle_flag() {
+        return castle_flag;
+    }
+
 
     /**
      * The various different chess piece options
@@ -233,10 +242,31 @@ public class ChessPiece {
             possibleMoves.addAll(addPawnMoves(myPosition, captureRightPosition));
         }
 
-        // en passant balogne
-
+        // check to see if the flag is up on either of the pawns immediately adjacent
+        ChessPosition left_position = new ChessPosition(start_row, start_col - 1);
+        ChessPosition left_en_passant_position = new ChessPosition(start_row + direction, start_col - 1);
+        ChessPiece left_piece = board.getPiece(left_position);
+        ChessPosition right_position = new ChessPosition(start_row, start_col + 1);
+        ChessPosition right_en_passant_position = new ChessPosition(start_row + direction, start_col + 1);
+        ChessPiece right_piece = board.getPiece(right_position);
+        if (left_piece != null){
+            if(left_piece.isEn_passant_flag() && canCapture(board, left_position) && isFree(board, left_en_passant_position)) {
+                ChessMove left_en_passant = new ChessMove(myPosition, left_en_passant_position, null);
+                possibleMoves.add(left_en_passant);
+            }
+        }
+        if(right_piece != null){
+            if(right_piece.isEn_passant_flag() && canCapture(board, right_position) && isFree(board, right_en_passant_position)) {
+                ChessMove right_en_passant = new ChessMove(myPosition, right_en_passant_position, null);
+                possibleMoves.add(right_en_passant);
+            }
+        }
 
         return possibleMoves;
+    }
+
+    public void setEn_passant_flag(boolean flag){
+        this.en_passant_flag = flag;
     }
 
     private Collection<ChessMove> addPawnMoves(ChessPosition myPosition, ChessPosition newPosition){

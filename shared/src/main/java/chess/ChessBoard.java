@@ -40,8 +40,11 @@ public class ChessBoard {
     public ChessPiece getPiece(ChessPosition position) {
         int x = position.getColumn();
         int y = position.getRow();
-
+        try{
         return this.board[x][y];
+        } catch (Exception ArrayIndexOutOfBoundsException) {
+            return null;
+        }
     }
 
     /**

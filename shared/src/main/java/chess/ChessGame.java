@@ -87,6 +87,9 @@ public class ChessGame {
         ChessPosition end_position = move.getEndPosition();
         ChessPiece.PieceType promotion = move.getPromotionPiece();
 
+        // any old en_passant_flags need to be cleared
+        clear_en_passant(current_turn);
+
         TeamColor opponent_color;
         if (current_turn == TeamColor.BLACK){
             opponent_color = TeamColor.WHITE;
@@ -109,16 +112,77 @@ public class ChessGame {
             throw new InvalidMoveException("This is not a valid move for this piece");
         }
 
+
+        // because the pawn moves are so different, we can just swap to that branch of logic so we don't have to it every time
+        if (moving_piece.getPieceType() == ChessPiece.PieceType.PAWN){
+            makePawnMove(move);
+
+        } else {
+            this.board.addPiece(start_position, null);
+            this.board.addPiece(end_position, moving_piece);
+
+            // now we need to change the turn over
+            setTeamTurn(opponent_color);
+        }
+    }
+
+    private void makePawnMove(ChessMove move){
+        ChessPosition start_position = move.getStartPosition();
+        ChessPosition end_position = move.getEndPosition();
+        ChessPiece.PieceType promotion = move.getPromotionPiece();
+
+        TeamColor opponent_color;
+        if (current_turn == TeamColor.BLACK){
+            opponent_color = TeamColor.WHITE;
+        } else {
+            opponent_color = TeamColor.BLACK;
+        }
+
+        ChessPiece moving_piece = this.board.getPiece(start_position);
+
         // if neither of these things are true, we're good to make the move
         // but first we can promote if we have to
         if (promotion != null){
             moving_piece = new ChessPiece(current_turn, promotion);
         }
+
+        boolean enPassant = false;
+        ChessPosition enPassantCapturePosition = null;
+
+        if (moving_piece.getPieceType() == ChessPiece.PieceType.PAWN
+                && start_position.getColumn() != end_position.getColumn()
+                && this.board.getPiece(end_position) == null) {
+
+            enPassant = true;
+
+            enPassantCapturePosition =
+                    new ChessPosition(start_position.getRow(), end_position.getColumn());
+        }
+
         this.board.addPiece(start_position, null);
         this.board.addPiece(end_position, moving_piece);
 
+        if (enPassant) {
+            this.board.addPiece(enPassantCapturePosition, null);
+        }
+
+        // check to see if the move sets the en_passant flag
+        if(moving_piece.getPieceType() == ChessPiece.PieceType.PAWN
+                && (start_position.getRow() == 2 || start_position.getRow() == 7)
+                && (end_position.getRow() == 4 || end_position.getRow() == 5)){
+            moving_piece.setEn_passant_flag(true);
+        }
+
         // now we need to change the turn over
         setTeamTurn(opponent_color);
+    }
+
+    private void clear_en_passant(TeamColor color){
+        Collection<ChessPosition> pawn_positions = getRelevantPositions(color, ChessPiece.PieceType.PAWN);
+        for(ChessPosition pawn_position : pawn_positions){
+            ChessPiece pawn = this.board.getPiece(pawn_position);
+            pawn.setEn_passant_flag(false);
+        }
     }
 
     private boolean testMove(ChessMove move) {
@@ -210,6 +274,24 @@ public class ChessGame {
 
         return relevantPositions;
     }
+
+    private Collection<ChessPosition> getRelevantPositions(TeamColor teamColor, ChessPiece.PieceType type) {
+        Collection<ChessPosition> relevantPositions = new ArrayList<>();
+
+        for (int row = 1; row <= 8; row++) {
+            for (int col = 1; col <= 8; col++) {
+
+                ChessPosition position = new ChessPosition(row, col);
+                ChessPiece piece = board.getPiece(position);
+
+                if (piece != null && piece.getPieceType() == type && piece.getTeamColor() == teamColor) {
+                    relevantPositions.add(position);
+                }
+            }
+        }
+
+        return relevantPositions;
+    }
     /**
      * Determines if the given team is in checkmate
      *
@@ -222,6 +304,8 @@ public class ChessGame {
         }
         return isInCheck(teamColor);
     }
+
+
 
     private boolean checkValidMovesAvailable(TeamColor teamColor) {
         Collection<ChessPosition> relevant_positions = getRelevantPositions(teamColor);
