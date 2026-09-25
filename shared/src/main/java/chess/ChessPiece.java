@@ -14,6 +14,8 @@ public class ChessPiece {
 
     private final ChessGame.TeamColor color;
     private final PieceType type;
+    private boolean en_passant_flag = false;
+    private boolean can_castle_flag = true;
 
     public ChessPiece(ChessGame.TeamColor pieceColor, ChessPiece.PieceType type) {
         this.color = pieceColor;
@@ -230,6 +232,9 @@ public class ChessPiece {
         if(canCapture(board, captureRightPosition)){
             possibleMoves.addAll(addPawnMoves(myPosition, captureRightPosition));
         }
+
+        // en passant balogne
+
 
         return possibleMoves;
     }
