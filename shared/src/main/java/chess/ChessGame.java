@@ -72,6 +72,12 @@ public class ChessGame {
         }
 
         Collection<ChessMove> possible_moves = piece.pieceMoves(this.board, startPosition);
+
+        // add castling moves
+        if (piece.getPieceType() == ChessPiece.PieceType.KING) {
+            possible_moves.addAll(getCastlingMoves(startPosition));
+        }
+
         possible_moves.removeIf(move -> !testMove(move));
         return possible_moves;
     }
@@ -186,6 +192,114 @@ public class ChessGame {
 
         // Change turns
         setTeamTurn(opponent_color);
+    }
+
+    private Collection<ChessMove> getCastlingMoves(ChessPosition kingPosition) {
+        Collection<ChessMove> castleMoves = new ArrayList<>();
+
+        if (canCastle(kingPosition, true)) {
+            castleMoves.add(
+                    new ChessMove(
+                            kingPosition,
+                            new ChessPosition(
+                                    kingPosition.getRow(),
+                                    kingPosition.getColumn() + 2
+                            ),
+                            null
+                    )
+            );
+        }
+
+        if (canCastle(kingPosition, false)) {
+            castleMoves.add(
+                    new ChessMove(
+                            kingPosition,
+                            new ChessPosition(
+                                    kingPosition.getRow(),
+                                    kingPosition.getColumn() - 2
+                            ),
+                            null
+                    )
+            );
+        }
+
+        return castleMoves;
+    }
+
+    private boolean canCastle(ChessPosition kingPosition, boolean kingSide) {
+
+        ChessPiece king = board.getPiece(kingPosition);
+
+        // King must still have castling rights
+        if (!king.isCastle_flag()) {
+            return false;
+        }
+
+        if (isInCheck(king.getTeamColor())) {
+            return false;
+        }
+
+        int row = kingPosition.getRow();
+        int kingCol = kingPosition.getColumn();
+
+        int rookCol;
+        if (kingSide) {
+            rookCol = 8;
+        } else {
+            rookCol = 1;
+        }
+
+        ChessPosition rookPosition = new ChessPosition(row, rookCol);
+        ChessPiece rook = board.getPiece(rookPosition);
+
+        // Make sure correct rook exists and hasn't moved
+        if (rook == null
+                || rook.getPieceType() != ChessPiece.PieceType.ROOK
+                || rook.getTeamColor() != king.getTeamColor()
+                || !rook.isCastle_flag()) {
+            return false;
+        }
+
+        // Check all squares between king and rook
+        int direction;
+        if (kingSide) {
+            direction = 1;
+        } else {
+            direction = -1;
+        }
+
+        for (int col = kingCol + direction;
+             col != rookCol;
+             col += direction) {
+
+            if (board.getPiece(new ChessPosition(row, col)) != null) {
+                return false;
+            }
+        }
+
+        // King must safely cross the intermediate square
+        ChessPosition middle =
+                new ChessPosition(row, kingCol + direction);
+
+        ChessMove middleMove =
+                new ChessMove(kingPosition, middle, null);
+
+        if (!testMove(middleMove)) {
+            return false;
+        }
+
+        // King must not be in check when he gets there.
+        ChessPosition destination =
+                new ChessPosition(row, kingCol + 2 * direction);
+
+        ChessMove castleMove =
+                new ChessMove(kingPosition, destination, null);
+
+        if (!testMove(castleMove)) {
+            return false;
+        }
+
+        return true;
     }
 
     private void makePawnMove(ChessMove move){
