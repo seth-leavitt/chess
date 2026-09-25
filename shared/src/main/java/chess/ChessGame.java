@@ -23,7 +23,7 @@ public class ChessGame {
      * @return Which team's turn it is
      */
     public TeamColor getTeamTurn() {
-        throw new RuntimeException("Not implemented");
+        return this.current_turn;
     }
 
     /**
@@ -32,7 +32,21 @@ public class ChessGame {
      * @param team the team whose turn it is
      */
     public void setTeamTurn(TeamColor team) {
-        throw new RuntimeException("Not implemented");
+        this.current_turn = team;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+        ChessGame chessGame = (ChessGame) o;
+        return Objects.equals(board, chessGame.board) && current_turn == chessGame.current_turn;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(board, current_turn);
     }
 
     /**
@@ -52,12 +66,14 @@ public class ChessGame {
      */
     public Collection<ChessMove> validMoves(ChessPosition startPosition) {
         ChessPiece piece = this.board.getPiece(startPosition);
-        System.out.println("Checking: " + piece);
-        if (piece != null) {
-            return piece.pieceMoves(this.board, startPosition);
-        } else {
+//        System.out.println("Checking: " + piece);
+        if (piece == null) {
             return null;
         }
+
+        Collection<ChessMove> possible_moves = piece.pieceMoves(this.board, startPosition);
+        possible_moves.removeIf(move -> !testMove(move));
+        return possible_moves;
     }
 
     /**
@@ -70,7 +86,18 @@ public class ChessGame {
         ChessPosition start_position = move.getStartPosition();
         ChessPosition end_position = move.getEndPosition();
 
+        TeamColor opponent_color = null;
+        if (current_turn == TeamColor.BLACK){
+            opponent_color = TeamColor.WHITE;
+        } else {
+            opponent_color = TeamColor.BLACK;
+        }
+
         ChessPiece moving_piece = this.board.getPiece(start_position);
+
+        if (moving_piece == null){
+            return;
+        }
 
         if (moving_piece.getTeamColor() != this.current_turn) {
             throw new InvalidMoveException("This is not the current player's piece");
@@ -84,6 +111,33 @@ public class ChessGame {
         // if neither of these things are true, we're good to make the move
         this.board.addPiece(start_position, null);
         this.board.addPiece(end_position, moving_piece);
+
+        // now we need to change the turn over
+        setTeamTurn(opponent_color);
+    }
+
+    private boolean testMove(ChessMove move) {
+        ChessPosition start_position = move.getStartPosition();
+        ChessPosition end_position = move.getEndPosition();
+
+        ChessPiece moving_piece = this.board.getPiece(start_position);
+        ChessPiece original_piece = this.board.getPiece(end_position);
+        TeamColor moving_team = moving_piece.getTeamColor();
+
+
+        // first we can just do the move
+        this.board.addPiece(start_position, null);
+        this.board.addPiece(end_position, moving_piece);
+
+        // now we check if we are in check
+        boolean checked = isInCheck(moving_team);
+
+        // now we undo the move
+        this.board.addPiece(start_position, moving_piece);
+        this.board.addPiece(end_position, original_piece);
+
+        // report the results
+        return !checked;
     }
 
     /**
@@ -96,6 +150,34 @@ public class ChessGame {
         TeamColor opposing_color;
 
         // first we need to find the king
+       ChessPosition king_position = findKing(teamColor);
+
+        if (teamColor == TeamColor.BLACK) {
+            opposing_color = TeamColor.WHITE;
+        } else {
+            opposing_color = TeamColor.BLACK;
+        }
+        // now we can reset positions to check to look for all the black pieces
+        Collection<ChessPosition> positions_to_check = getRelevantPositions(opposing_color);
+        Collection<ChessMove> possible_opponent_moves = new ArrayList<>();
+        for (ChessPosition position : positions_to_check) {
+            ChessPiece opponent_piece = this.board.getPiece(position);
+            possible_opponent_moves.addAll(opponent_piece.pieceMoves(this.board, position));
+        }
+        Collection<ChessPosition> possible_opponent_positions = new ArrayList<>();
+        for (ChessMove move : possible_opponent_moves) {
+            possible_opponent_positions.add(move.getEndPosition());
+        }
+        for (ChessPosition position : possible_opponent_positions) {
+//            System.out.println("Piece that could be attacked: " + this.board.getPiece(position));
+            if (position.equals(king_position)){
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private ChessPosition findKing(TeamColor teamColor){
         Collection<ChessPosition> positions_to_check = getRelevantPositions(teamColor);
         ChessPosition king_position = null;
         for (ChessPosition position : positions_to_check){
@@ -103,30 +185,7 @@ public class ChessGame {
                 king_position = position;
             }
         }
-
-        if (teamColor == TeamColor.BLACK) {
-            opposing_color = TeamColor.WHITE;
-        } else {
-            opposing_color = TeamColor.BLACK;
-        }
-
-        // now we can reset positions to check to look for all the black pieces
-        positions_to_check = getRelevantPositions(opposing_color);
-        Collection<ChessMove> possible_opponent_moves = new ArrayList<>();
-        for (ChessPosition position : positions_to_check) {
-            possible_opponent_moves.addAll(validMoves(position));
-        }
-        Collection<ChessPosition> possible_opponent_positions = new ArrayList<>();
-        for (ChessMove move : possible_opponent_moves) {
-            possible_opponent_positions.add(move.getEndPosition());
-        }
-        for (ChessPosition position : possible_opponent_positions) {
-            System.out.println("Piece that could be attacked: " + this.board.getPiece(position));
-            if (position.equals(king_position)){
-                return true;
-            }
-        }
-        return false;
+        return king_position;
     }
 
     private Collection<ChessPosition> getRelevantPositions(TeamColor teamColor) {
@@ -153,7 +212,10 @@ public class ChessGame {
      * @return True if the specified team is in checkmate
      */
     public boolean isInCheckmate(TeamColor teamColor) {
-        throw new RuntimeException("Not implemented");
+        ChessPosition king_position = findKing(teamColor);
+        Collection<ChessMove> potential_moves = validMoves(king_position);
+
+        return potential_moves.isEmpty() && isInCheck(teamColor);
     }
 
     /**
@@ -164,7 +226,16 @@ public class ChessGame {
      * @return True if the specified team is in stalemate, otherwise false
      */
     public boolean isInStalemate(TeamColor teamColor) {
-        throw new RuntimeException("Not implemented");
+        Collection<ChessPosition> relevant_positions = getRelevantPositions(teamColor);
+
+        Collection<ChessMove> possible_moves = new ArrayList<>();
+        for (ChessPosition position : relevant_positions){
+            possible_moves.addAll(validMoves(position));
+            if (!possible_moves.isEmpty()){
+                return false;
+            }
+        }
+        return !isInCheck(teamColor);
     }
 
     /**
@@ -182,6 +253,6 @@ public class ChessGame {
      * @return the chessboard
      */
     public ChessBoard getBoard() {
-        throw new RuntimeException("Not implemented");
+        return this.board;
     }
 }
