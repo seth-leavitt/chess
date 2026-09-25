@@ -85,7 +85,6 @@ public class ChessGame {
     public void makeMove(ChessMove move) throws InvalidMoveException {
         ChessPosition start_position = move.getStartPosition();
         ChessPosition end_position = move.getEndPosition();
-        ChessPiece.PieceType promotion = move.getPromotionPiece();
 
         // any old en_passant_flags need to be cleared
         clear_en_passant(current_turn);
@@ -112,18 +111,81 @@ public class ChessGame {
             throw new InvalidMoveException("This is not a valid move for this piece");
         }
 
-
         // because the pawn moves are so different, we can just swap to that branch of logic so we don't have to it every time
         if (moving_piece.getPieceType() == ChessPiece.PieceType.PAWN){
             makePawnMove(move);
-
+        } else if (moving_piece.getPieceType() == ChessPiece.PieceType.KING){
+            makeKingMove(move);
         } else {
             this.board.addPiece(start_position, null);
             this.board.addPiece(end_position, moving_piece);
 
+            // any piece that has moved can't castle
+            moving_piece.setCastle_flag(false);
+
             // now we need to change the turn over
             setTeamTurn(opponent_color);
         }
+    }
+
+    private void makeKingMove(ChessMove move) {
+        ChessPosition start_position = move.getStartPosition();
+        ChessPosition end_position = move.getEndPosition();
+
+        TeamColor opponent_color;
+        if (current_turn == TeamColor.BLACK) {
+            opponent_color = TeamColor.WHITE;
+        } else {
+            opponent_color = TeamColor.BLACK;
+        }
+
+        ChessPiece moving_piece = this.board.getPiece(start_position);
+
+        int start_col = start_position.getColumn();
+        int end_col = end_position.getColumn();
+        int row = start_position.getRow();
+
+        // Check if this is a castle
+        if (Math.abs(end_col - start_col) == 2) {
+
+            // Kingside castle
+            if (end_col > start_col) {
+                ChessPosition rook_start = new ChessPosition(row, 8);
+                ChessPosition rook_end = new ChessPosition(row, end_col - 1);
+
+                ChessPiece rook = this.board.getPiece(rook_start);
+
+                // Move rook
+                this.board.addPiece(rook_start, null);
+                this.board.addPiece(rook_end, rook);
+
+                rook.setCastle_flag(false);
+            }
+
+            // Queenside castle
+            else {
+                ChessPosition rook_start = new ChessPosition(row, 1);
+                ChessPosition rook_end = new ChessPosition(row, end_col + 1);
+
+                ChessPiece rook = this.board.getPiece(rook_start);
+
+                // Move rook
+                this.board.addPiece(rook_start, null);
+                this.board.addPiece(rook_end, rook);
+
+                rook.setCastle_flag(false);
+            }
+        }
+
+        // Move king
+        this.board.addPiece(start_position, null);
+        this.board.addPiece(end_position, moving_piece);
+
+        // King can never castle again after moving
+        moving_piece.setCastle_flag(false);
+
+        // Change turns
+        setTeamTurn(opponent_color);
     }
 
     private void makePawnMove(ChessMove move){

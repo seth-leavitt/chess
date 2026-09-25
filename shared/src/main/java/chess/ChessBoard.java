@@ -115,6 +115,11 @@ public class ChessBoard {
 
     @Override
     public String toString() {
-        return Arrays.deepToString(board);
+        StringBuilder string = new StringBuilder();
+        for (ChessPiece[] row : board){
+            string.append(Arrays.toString(row));
+            string.append("\n");
+        }
+        return  string.toString();
     }
 }

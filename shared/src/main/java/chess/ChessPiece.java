@@ -128,7 +128,37 @@ public class ChessPiece {
                 }
             }
         }
+        ChessPosition left_rook_position = new ChessPosition(row_start, col_start - 4);
+        ChessPiece left_rook = board.getPiece(left_rook_position);
+        ChessPosition right_rook_position = new ChessPosition(row_start, col_start + 3);
+        ChessPiece right_rook = board.getPiece(right_rook_position);
+
+        if(isCastle_flag()) {
+            if(clearBetween(board, myPosition, left_rook_position) && left_rook != null && left_rook.isCastle_flag()){
+                ChessMove left_castle = new ChessMove(myPosition, new ChessPosition(row_start, col_start-2), null);
+                possibleMoves.add(left_castle);
+            }
+            if(clearBetween(board, myPosition, right_rook_position) && right_rook != null && right_rook.isCastle_flag()){
+                ChessMove right_castle = new ChessMove(myPosition, new ChessPosition(row_start, col_start+2), null);
+                possibleMoves.add(right_castle);
+            }
+        }
+
         return possibleMoves;
+    }
+
+    private boolean clearBetween(ChessBoard board, ChessPosition kingPos, ChessPosition rookPos) {
+        int row = kingPos.getRow();
+        int startCol = Math.min(kingPos.getColumn(), rookPos.getColumn()) + 1;
+        int endCol = Math.max(kingPos.getColumn(), rookPos.getColumn());
+
+        for (int col = startCol; col < endCol; col++) {
+            if (board.getPiece(new ChessPosition(row, col)) != null) {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     private Collection<ChessMove> queenMoves(ChessBoard board, ChessPosition myPosition){
@@ -268,6 +298,11 @@ public class ChessPiece {
     public void setEn_passant_flag(boolean flag){
         this.en_passant_flag = flag;
     }
+
+    public void setCastle_flag(boolean castle_flag) {
+        this.castle_flag = castle_flag;
+    }
+
 
     private Collection<ChessMove> addPawnMoves(ChessPosition myPosition, ChessPosition newPosition){
         Collection<ChessMove> possibleMoves = new ArrayList<>();
