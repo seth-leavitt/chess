@@ -1,5 +1,7 @@
 package server;
 
+import io.javalin.Javalin;
+
 import java.util.UUID;
 
 public class ServerMain {
@@ -7,9 +9,6 @@ public class ServerMain {
         var port = 8080;
         Server server = new Server();
         server.run(port);
-
-
-
         System.out.println("♕ 240 Chess Server running on port " + port);
     }
     // definition of the different endpoints

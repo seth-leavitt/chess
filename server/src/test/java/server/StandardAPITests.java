@@ -108,7 +108,7 @@ public class StandardAPITests {
     @Order(5)
     @DisplayName("Normal User Registration")
     public void registerSuccess() {
-        //submit register request
+        //submit RegisterUser request
         TestAuthResult registerResult = serverFacade.register(newUser);
 
         assertHttpOk(registerResult);
@@ -121,7 +121,7 @@ public class StandardAPITests {
     @Order(6)
     @DisplayName("Re-Register User")
     public void registerTwice() {
-        //submit register request trying to register existing user
+        //submit RegisterUser request trying to RegisterUser existing user
         TestAuthResult registerResult = serverFacade.register(existingUser);
 
         assertHttpForbidden(registerResult);
@@ -132,7 +132,7 @@ public class StandardAPITests {
     @Order(7)
     @DisplayName("Register Bad Request")
     public void registerBadRequest() {
-        //attempt to register a user without a password
+        //attempt to RegisterUser a user without a password
         TestUser registerRequest = new TestUser(newUser.getUsername(), null, newUser.getEmail());
         TestAuthResult registerResult = serverFacade.register(registerRequest);
 
@@ -260,7 +260,7 @@ public class StandardAPITests {
         TestJoinRequest joinRequest = new TestJoinRequest(ChessGame.TeamColor.BLACK, createResult.getGameID());
         serverFacade.joinPlayer(joinRequest, existingAuth);
 
-        //register second user
+        //RegisterUser second user
         TestAuthResult registerResult = serverFacade.register(newUser);
 
         //join request trying to also join  as black
@@ -301,7 +301,7 @@ public class StandardAPITests {
     @Order(19)
     @DisplayName("List Multiple Games")
     public void listGamesSuccess() {
-        //register a few users to create games
+        //RegisterUser a few users to create games
         TestUser userA = new TestUser("a", "A", "a@mail.com");
         TestUser userB = new TestUser("b", "B", "b@mail.com");
         TestUser userC = new TestUser("c", "C", "c@mail.com");
@@ -369,9 +369,9 @@ public class StandardAPITests {
         Assertions.assertNotNull(loginTwo.getAuthToken(), "Login result did not contain an authToken");
 
         Assertions.assertNotEquals(existingAuth, loginOne.getAuthToken(),
-                "Authtoken returned by login matched authtoken from prior register");
+                "Authtoken returned by login matched authtoken from prior RegisterUser");
         Assertions.assertNotEquals(existingAuth, loginTwo.getAuthToken(),
-                "Authtoken returned by login matched authtoken from prior register");
+                "Authtoken returned by login matched authtoken from prior RegisterUser");
         Assertions.assertNotEquals(loginOne.getAuthToken(), loginTwo.getAuthToken(),
                 "Authtoken returned by login matched authtoken from prior login");
     }
