@@ -1,7 +1,5 @@
 package results;
 
-import requests.RegistrationRequest;
-
 public class RegistrationResult {
     final String username;
     final String authToken;
