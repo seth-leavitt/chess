@@ -2,10 +2,8 @@ package server;
 
 import dataaccess.DataAccess;
 import dataaccess.MemoryDataAccess;
+import handlers.UserHandler;
 import io.javalin.*;
-import io.javalin.http.Context;
-import io.javalin.http.Handler;
-import org.jetbrains.annotations.NotNull;
 import service.UserService;
 
 public class Server {
@@ -27,7 +25,7 @@ public class Server {
         javalin = Javalin.create(config -> config.staticFiles.add("web"));
 
         // Register your endpoints and exception handlers here.
-        javalin.post("/user", userHandler::RegisterUser);
+        javalin.post("/user", userHandler::registerUser);
     }
 
     public int run(int desiredPort) {

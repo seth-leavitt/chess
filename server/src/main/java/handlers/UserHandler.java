@@ -1,9 +1,9 @@
-package server;
+package handlers;
 
 import dataaccess.DataAccessException;
 import io.javalin.http.Context;
-import io.javalin.http.Handler;
 import requests.RegistrationRequest;
+import results.RegistrationResult;
 import service.UserService;
 import com.google.gson.Gson;
 
@@ -17,14 +17,17 @@ public class UserHandler {
         this.userService = userService;
     }
 
-    public void RegisterUser(Context context){
+    public void registerUser(Context context){
         RegistrationRequest request = serializer.fromJson(context.body(), RegistrationRequest.class);
         try {
-            this.userService.register(request);
+            RegistrationResult result = this.userService.register(request);
+            context.contentType("application/json");
+            context.status(200).result(serializer.toJson(result));
         } catch (DataAccessException e) {
             context.status(500).result(serializer.toJson(
                     Map.of("message", "Error: " + e.getMessage())
             ));
         }
+
     }
 }

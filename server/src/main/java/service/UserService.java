@@ -16,7 +16,8 @@ public class UserService {
     public RegistrationResult register(RegistrationRequest request) throws DataAccessException{
         UserData user = new UserData(request.getUsername(), request.getPassword());
         try {
-            dataAccess.RegisterUser(user);
+            String authToken = dataAccess.registerUser(user);
+            return new RegistrationResult(request.getUsername(), authToken);
         } catch (DataAccessException e) {
             throw new DataAccessException("User Registration Failed");
         }

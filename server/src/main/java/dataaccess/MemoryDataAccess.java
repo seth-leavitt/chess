@@ -8,7 +8,7 @@ import model.UserData;
 public class MemoryDataAccess implements DataAccess {
     HashMap<String, UserData> users = new HashMap<>();
 
-    public String RegisterUser(UserData userData) throws DataAccessException {
+    public String registerUser(UserData userData) throws DataAccessException {
         if (getUser(userData.getUsername()) != null){
             throw new DataAccessException("User Already Exists");
         }
