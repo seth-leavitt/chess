@@ -4,6 +4,7 @@ import dataaccess.DataAccess;
 import dataaccess.DataAccessException;
 import model.UserData;
 import requests.LoginRequest;
+import requests.LogoutRequest;
 import requests.RegistrationRequest;
 import results.*;
 
@@ -40,6 +41,15 @@ public class UserService {
             }
         }catch(DataAccessException e){
             throw new DataAccessException("Login Failed");
+        }
+    }
+
+    public LogoutResult logout(LogoutRequest request) throws DataAccessException{
+        try {
+            String authToken = request.getAuthToken();
+            return new LogoutResult(dataAccess.logoutUser(authToken));
+        }catch(DataAccessException e){
+            throw new DataAccessException("Session does not exist");
         }
     }
 }
