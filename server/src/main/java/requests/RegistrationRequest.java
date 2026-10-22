@@ -20,7 +20,7 @@ public class RegistrationRequest {
         this.password = password;
     }
 
-    RegistrationRequest(String username, String password){
+    public RegistrationRequest(String username, String password){
         this.username = username;
         this.password = password;
     }

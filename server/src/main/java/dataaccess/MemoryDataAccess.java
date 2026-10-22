@@ -3,35 +3,32 @@ package dataaccess;
 import java.util.HashMap;
 import java.util.UUID;
 
+import model.AuthData;
 import model.UserData;
 
 public class MemoryDataAccess implements DataAccess {
     HashMap<String, UserData> users = new HashMap<>();
-    HashMap<String, UserData> authTokens = new HashMap<>();
+    HashMap<String, AuthData> authTokens = new HashMap<>();
 
-    public String registerUser(UserData userData) throws DataAccessException {
+    public AuthData registerUser(UserData userData) throws DataAccessException {
         if (getUser(userData.getUsername()) != null){
             throw new DataAccessException("User Already Exists");
         }
-        String authToken = String.valueOf(UUID.randomUUID());
-        userData.setAuthToken(authToken);
         users.put(userData.getUsername(), userData);
-        authTokens.put(userData.getAuthToken(), userData);
-        // now that the user is registered and we've save their token, we can pass the token back
-        return authToken;
+        return loginUser(userData);
     }
 
-    public String loginUser(UserData userData) throws DataAccessException {
+    public AuthData loginUser(UserData userData) throws DataAccessException {
         if (getUser(userData.getUsername()) == null){
             throw new DataAccessException("User does not exists");
         }
-        String authToken = String.valueOf(UUID.randomUUID());
-        userData.setAuthToken(authToken);
+        AuthData authData = new AuthData(UUID.randomUUID().toString(), userData.getUsername());
+        authTokens.put(authData.getAuthToken(), authData);
+        return authData;
+    }
 
-        // add them to the current sessions
-        authTokens.put(authToken, getUser(userData.getUsername()));
-        // now that the user is registered and we've save their token, we can pass the token back
-        return authToken;
+    public AuthData getAuth(String authToken) {
+        return authTokens.get(authToken);
     }
 
     public boolean logoutUser(String authToken) throws DataAccessException {

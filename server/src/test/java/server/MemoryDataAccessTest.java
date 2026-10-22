@@ -2,9 +2,7 @@ package server;
 
 import dataaccess.DataAccessException;
 import dataaccess.MemoryDataAccess;
-import model.UserData;
-import dataaccess.DataAccessException;
-import dataaccess.MemoryDataAccess;
+import model.AuthData;
 import model.UserData;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -29,7 +27,7 @@ public class MemoryDataAccessTest {
 
         UserData user = new UserData("username", "password");
 
-        String token = da.registerUser(user);
+        AuthData authData = da.registerUser(user);
 
         UserData savedUser = da.getUser("username");
 
@@ -37,9 +35,10 @@ public class MemoryDataAccessTest {
         assertEquals("username", savedUser.getUsername());
         assertEquals("password", savedUser.getPassword());
 
-        assertNotNull(token);
-        assertFalse(token.isBlank());
-        assertEquals(token, savedUser.getAuthToken());
+        assertNotNull(authData);
+        assertFalse(authData.getAuthToken().isBlank());
+        assertEquals(savedUser.getUsername(), authData.getUsername());
+        assertSame(authData, da.getAuth(authData.getAuthToken()));
     }
     @Test
     void registeringDuplicateUsernameThrows() throws DataAccessException {
@@ -75,5 +74,35 @@ public class MemoryDataAccessTest {
         UserData user = da.getUser("nobody");
 
         assertNull(user);
+    }
+
+    @Test
+    void sessionsRemainIndependentAndLogoutRevokesOnlyOne() throws DataAccessException {
+        UserData user = new UserData("username", "password");
+        AuthData registration = da.registerUser(user);
+        AuthData login = da.loginUser(user);
+
+        assertNotEquals(registration.getAuthToken(), login.getAuthToken());
+        assertEquals("username", login.getUsername());
+        assertSame(registration, da.getAuth(registration.getAuthToken()));
+        assertSame(login, da.getAuth(login.getAuthToken()));
+
+        assertTrue(da.logoutUser(registration.getAuthToken()));
+        assertNull(da.getAuth(registration.getAuthToken()));
+        assertSame(login, da.getAuth(login.getAuthToken()));
+        assertSame(user, da.getUser("username"));
+        assertFalse(da.logoutUser(registration.getAuthToken()));
+    }
+
+    @Test
+    void loginForUnknownUserThrows() {
+        assertThrows(DataAccessException.class,
+                () -> da.loginUser(new UserData("nobody", "password")));
+    }
+
+    @Test
+    void unknownTokenReturnsNull() {
+        assertNull(da.getAuth("invalid-token"));
+        assertNull(da.getAuth(null));
     }
 }

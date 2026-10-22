@@ -2,6 +2,7 @@ package service;
 
 import dataaccess.DataAccess;
 import dataaccess.DataAccessException;
+import model.AuthData;
 import model.UserData;
 import requests.LoginRequest;
 import requests.LogoutRequest;
@@ -18,10 +19,13 @@ public class UserService {
     }
 
     public RegistrationResult register(RegistrationRequest request) throws DataAccessException{
+        if (request.getUsername() == null || request.getPassword() == null) {
+            throw new DataAccessException("Username and password are required");
+        }
         UserData user = new UserData(request.getUsername(), request.getPassword());
         try {
-            String authToken = dataAccess.registerUser(user);
-            return new RegistrationResult(request.getUsername(), authToken);
+            AuthData authData = dataAccess.registerUser(user);
+            return new RegistrationResult(authData);
         } catch (DataAccessException e) {
             throw new DataAccessException("User Registration Failed");
         }
@@ -37,11 +41,8 @@ public class UserService {
             String realPassword = user.getPassword();
             String providedPassword = request.getPassword();
             if (Objects.equals(realPassword, providedPassword)){
-                dataAccess.loginUser(user);
-
-                // this is mildly messy, but we need to update the authToken
-                user = dataAccess.getUser(request.getUsername());
-                return new LoginResult(user.getUsername(), user.getAuthToken());
+                AuthData authData = dataAccess.loginUser(user);
+                return new LoginResult(authData);
             } else {
                 throw new DataAccessException("Incorrect Password");
             }
