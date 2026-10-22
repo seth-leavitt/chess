@@ -1,6 +1,5 @@
 package model;
 
-import results.RegistrationResult;
 
 public class UserData {
     public String getAuthToken() {
@@ -9,6 +8,11 @@ public class UserData {
 
     public void setAuthToken(String authToken) {
         this.authToken = authToken;
+    }
+
+
+    public String getPassword() {
+        return password;
     }
 
     String username;

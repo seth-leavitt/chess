@@ -3,8 +3,11 @@ package service;
 import dataaccess.DataAccess;
 import dataaccess.DataAccessException;
 import model.UserData;
+import requests.LoginRequest;
 import requests.RegistrationRequest;
-import results.RegistrationResult;
+import results.*;
+
+import java.util.Objects;
 
 public class UserService {
     DataAccess dataAccess;
@@ -22,5 +25,21 @@ public class UserService {
             throw new DataAccessException("User Registration Failed");
         }
 
+    }
+
+    public LoginResult login(LoginRequest request) throws DataAccessException{
+        try {
+            UserData user = dataAccess.getUser(request.getUsername());
+            String realPassword = user.getPassword();
+            String providedPassword = request.getPassword();
+            if (Objects.equals(realPassword, providedPassword)){
+                String authToken = user.getAuthToken();
+                return new LoginResult(user.getUsername(), authToken);
+            } else {
+                throw new DataAccessException("Incorrect Password");
+            }
+        }catch(DataAccessException e){
+            throw new DataAccessException("Login Failed");
+        }
     }
 }
