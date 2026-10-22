@@ -3,12 +3,14 @@ package dataaccess;
 import java.util.HashMap;
 import java.util.UUID;
 
+import chess.ChessGame;
 import model.AuthData;
 import model.UserData;
 
 public class MemoryDataAccess implements DataAccess {
     HashMap<String, UserData> users = new HashMap<>();
     HashMap<String, AuthData> authTokens = new HashMap<>();
+    HashMap<UUID, ChessGame> games = new HashMap<>();
 
     public AuthData registerUser(UserData userData) throws DataAccessException {
         if (getUser(userData.getUsername()) != null){
@@ -42,5 +44,21 @@ public class MemoryDataAccess implements DataAccess {
 
     public UserData getUser(String username){
         return users.getOrDefault(username, null);
+    }
+
+    public UUID createGame(ChessGame game) {
+        UUID gameID = UUID.randomUUID();
+        games.put(gameID, game);
+        return gameID;
+    }
+
+    public ChessGame getGame(UUID gameID) {
+        return games.get(gameID);
+    }
+
+    public void clear() {
+        users.clear();
+        authTokens.clear();
+        games.clear();
     }
 }

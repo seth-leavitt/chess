@@ -2,8 +2,10 @@ package server;
 
 import dataaccess.DataAccess;
 import dataaccess.MemoryDataAccess;
+import handlers.DatabaseHandler;
 import handlers.UserHandler;
 import io.javalin.*;
+import service.DatabaseService;
 import service.UserService;
 
 public class Server {
@@ -17,10 +19,11 @@ public class Server {
 
         // Services
         UserService userService = new UserService(dataAccess);
+        DatabaseService databaseService = new DatabaseService(dataAccess);
 
         // Handlers
         UserHandler userHandler = new UserHandler(userService);
-
+        DatabaseHandler databaseHandler = new DatabaseHandler(databaseService);
 
         javalin = Javalin.create(config -> config.staticFiles.add("web"));
 
@@ -28,6 +31,7 @@ public class Server {
         javalin.post("/user", userHandler::registerUser);
         javalin.post("/session", userHandler::loginUser);
         javalin.delete("/session", userHandler::logoutUser);
+        javalin.delete("/db", databaseHandler::clear);
     }
 
     public int run(int desiredPort) {
