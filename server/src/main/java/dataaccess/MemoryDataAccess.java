@@ -27,6 +27,9 @@ public class MemoryDataAccess implements DataAccess {
         }
         String authToken = String.valueOf(UUID.randomUUID());
         userData.setAuthToken(authToken);
+
+        // add them to the current sessions
+        authTokens.put(authToken, getUser(userData.getUsername()));
         // now that the user is registered and we've save their token, we can pass the token back
         return authToken;
     }

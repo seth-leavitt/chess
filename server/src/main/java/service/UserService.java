@@ -31,11 +31,17 @@ public class UserService {
     public LoginResult login(LoginRequest request) throws DataAccessException{
         try {
             UserData user = dataAccess.getUser(request.getUsername());
+            if (user == null) {
+                throw new DataAccessException("User does not exist");
+            }
             String realPassword = user.getPassword();
             String providedPassword = request.getPassword();
             if (Objects.equals(realPassword, providedPassword)){
-                String authToken = user.getAuthToken();
-                return new LoginResult(user.getUsername(), authToken);
+                dataAccess.loginUser(user);
+
+                // this is mildly messy, but we need to update the authToken
+                user = dataAccess.getUser(request.getUsername());
+                return new LoginResult(user.getUsername(), user.getAuthToken());
             } else {
                 throw new DataAccessException("Incorrect Password");
             }
