@@ -1,4 +1,4 @@
-package server;
+package service;
 
 import chess.ChessGame;
 import dataaccess.DataAccessException;
@@ -11,8 +11,6 @@ import requests.CreateGameRequest;
 import requests.JoinGameRequest;
 import requests.ListGamesRequest;
 import results.CreateGameResult;
-import service.GameService;
-import service.ServiceException;
 
 import static org.junit.jupiter.api.Assertions.*;
 
