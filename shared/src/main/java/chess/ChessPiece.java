@@ -14,8 +14,8 @@ public class ChessPiece {
 
     private final ChessGame.TeamColor color;
     private final PieceType type;
-    private boolean en_passant_flag = false;
-    private boolean castle_flag = true;
+    private boolean enPassantFlag = false;
+    private boolean castleFlag = true;
 
     public ChessPiece(ChessGame.TeamColor pieceColor, ChessPiece.PieceType type) {
         this.color = pieceColor;
@@ -57,12 +57,12 @@ public class ChessPiece {
         return Objects.hash(color, type);
     }
 
-    public boolean isEn_passant_flag() {
-        return en_passant_flag;
+    public boolean isEnPassantFlag() {
+        return enPassantFlag;
     }
 
-    public boolean isCastle_flag() {
-        return castle_flag;
+    public boolean isCastleFlag() {
+        return castleFlag;
     }
 
 
@@ -111,24 +111,8 @@ public class ChessPiece {
     }
 
     private Collection<ChessMove> kingMoves(ChessBoard board, ChessPosition myPosition){
-        int col_start = myPosition.getColumn();
-        int row_start = myPosition.getRow();
-
-        Collection<ChessMove> possibleMoves = new ArrayList<>();
         int[][] directions = {{1,1}, {1,0}, {1,-1}, {0,1}, {0,-1}, {-1, 1}, {-1, 0}, {-1,-1}};
-        for (int[] direction : directions) {
-            ChessPosition newPosition = new ChessPosition(row_start + direction[0], col_start + direction[1]);
-            if(isFree(board, newPosition)){
-                ChessMove newMove = new ChessMove(myPosition, newPosition, null);
-                possibleMoves.add(newMove);
-            }else{
-                if(canCapture(board, newPosition)){
-                    ChessMove newMove = new ChessMove(myPosition, newPosition, null);
-                    possibleMoves.add(newMove);
-                }
-            }
-        }
-        return possibleMoves;
+        return directionalMoves(board, myPosition, directions, 1);
     }
 
     private Collection<ChessMove> queenMoves(ChessBoard board, ChessPosition myPosition){
@@ -142,36 +126,22 @@ public class ChessPiece {
     }
 
     private Collection<ChessMove> rookMoves(ChessBoard board, ChessPosition myPosition){
-        int col_start = myPosition.getColumn();
-        int row_start = myPosition.getRow();
-        Collection<ChessMove> possibleMoves = new ArrayList<>();
         int[][] directions = {{1,0}, {-1,0}, {0,1}, {0,-1}};
-        for (int[] direction : directions) {
-            for(int x = 1; x <= 8 && x >= 1; x++){
-                ChessPosition newPosition = new ChessPosition(row_start + x*direction[0], col_start + x*direction[1]);
-                if(isFree(board, newPosition)){
-                    ChessMove newMove = new ChessMove(myPosition, newPosition, null);
-                    possibleMoves.add(newMove);
-                }else{
-                    if(canCapture(board, newPosition)){
-                        ChessMove newMove = new ChessMove(myPosition, newPosition, null);
-                        possibleMoves.add(newMove);
-                    }
-                    break;
-                }
-            }
-        }
-        return possibleMoves;
+        return directionalMoves(board, myPosition, directions, 8);
     }
 
     private Collection<ChessMove> bishopMoves(ChessBoard board, ChessPosition myPosition){
-        int col_start = myPosition.getColumn();
-        int row_start = myPosition.getRow();
-        Collection<ChessMove> possibleMoves = new ArrayList<>();
         int[][] directions = {{1,1}, {-1,-1}, {-1,1}, {1,-1}};
+        return directionalMoves(board, myPosition, directions, 8);
+    }
+
+    private Collection<ChessMove> directionalMoves(ChessBoard board, ChessPosition myPosition,
+                                                  int[][] directions, int maxDistance) {
+        Collection<ChessMove> possibleMoves = new ArrayList<>();
         for (int[] direction : directions) {
-            for(int x = 1; x <= 8 && x >= 1; x++){
-                ChessPosition newPosition = new ChessPosition(row_start + x*direction[0], col_start + x*direction[1]);
+            for (int distance = 1; distance <= maxDistance; distance++) {
+                ChessPosition newPosition = new ChessPosition(myPosition.getRow() + distance * direction[0],
+                        myPosition.getColumn() + distance * direction[1]);
                 if(isFree(board, newPosition)){
                     ChessMove newMove = new ChessMove(myPosition, newPosition, null);
                     possibleMoves.add(newMove);
@@ -188,23 +158,8 @@ public class ChessPiece {
     }
 
     private Collection<ChessMove> knightMoves(ChessBoard board, ChessPosition myPosition){
-        int col_start = myPosition.getColumn();
-        int row_start = myPosition.getRow();
-        Collection<ChessMove> possibleMoves = new ArrayList<>();
         int[][] directions = {{1,2}, {1,-2}, {-1, 2}, {-1, -2}, {2, 1}, {-2, 1}, {-2, -1}, {2, -1}};
-        for (int[] direction : directions) {
-            ChessPosition newPosition = new ChessPosition(row_start + direction[0], col_start + direction[1]);
-            if(isFree(board, newPosition)){
-                ChessMove newMove = new ChessMove(myPosition, newPosition, null);
-                possibleMoves.add(newMove);
-            }else{
-                if(canCapture(board, newPosition)){
-                    ChessMove newMove = new ChessMove(myPosition, newPosition, null);
-                    possibleMoves.add(newMove);
-                }
-            }
-        }
-        return possibleMoves;
+        return directionalMoves(board, myPosition, directions, 1);
     }
 
     private Collection<ChessMove> pawnMoves(ChessBoard board, ChessPosition myPosition){
@@ -250,13 +205,13 @@ public class ChessPiece {
         ChessPosition right_en_passant_position = new ChessPosition(start_row + direction, start_col + 1);
         ChessPiece right_piece = board.getPiece(right_position);
         if (left_piece != null){
-            if(left_piece.isEn_passant_flag() && canCapture(board, left_position) && isFree(board, left_en_passant_position)) {
+            if(left_piece.isEnPassantFlag() && canCapture(board, left_position) && isFree(board, left_en_passant_position)) {
                 ChessMove left_en_passant = new ChessMove(myPosition, left_en_passant_position, null);
                 possibleMoves.add(left_en_passant);
             }
         }
         if(right_piece != null){
-            if(right_piece.isEn_passant_flag() && canCapture(board, right_position) && isFree(board, right_en_passant_position)) {
+            if(right_piece.isEnPassantFlag() && canCapture(board, right_position) && isFree(board, right_en_passant_position)) {
                 ChessMove right_en_passant = new ChessMove(myPosition, right_en_passant_position, null);
                 possibleMoves.add(right_en_passant);
             }
@@ -265,12 +220,12 @@ public class ChessPiece {
         return possibleMoves;
     }
 
-    public void setEn_passant_flag(boolean flag){
-        this.en_passant_flag = flag;
+    public void setEnPassantFlag(boolean flag){
+        this.enPassantFlag = flag;
     }
 
-    public void setCastle_flag(boolean castle_flag) {
-        this.castle_flag = castle_flag;
+    public void setCastleFlag(boolean castleFlag) {
+        this.castleFlag = castleFlag;
     }
 
 

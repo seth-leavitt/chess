@@ -13,7 +13,7 @@ import java.util.Objects;
 public class ChessGame {
 
     ChessBoard board = new ChessBoard();
-    TeamColor current_turn = TeamColor.WHITE;
+    TeamColor currentTurn = TeamColor.WHITE;
 
     public ChessGame() {
         this.board.resetBoard();
@@ -23,7 +23,7 @@ public class ChessGame {
      * @return Which team's turn it is
      */
     public TeamColor getTeamTurn() {
-        return this.current_turn;
+        return this.currentTurn;
     }
 
     /**
@@ -32,7 +32,7 @@ public class ChessGame {
      * @param team the team whose turn it is
      */
     public void setTeamTurn(TeamColor team) {
-        this.current_turn = team;
+        this.currentTurn = team;
     }
 
     @Override
@@ -41,12 +41,12 @@ public class ChessGame {
             return false;
         }
         ChessGame chessGame = (ChessGame) o;
-        return Objects.equals(board, chessGame.board) && current_turn == chessGame.current_turn;
+        return Objects.equals(board, chessGame.board) && currentTurn == chessGame.currentTurn;
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(board, current_turn);
+        return Objects.hash(board, currentTurn);
     }
 
     /**
@@ -66,7 +66,6 @@ public class ChessGame {
      */
     public Collection<ChessMove> validMoves(ChessPosition startPosition) {
         ChessPiece piece = this.board.getPiece(startPosition);
-//        System.out.println("Checking: " + piece);
         if (piece == null) {
             return null;
         }
@@ -92,11 +91,11 @@ public class ChessGame {
         ChessPosition start_position = move.getStartPosition();
         ChessPosition end_position = move.getEndPosition();
 
-        // any old en_passant_flags need to be cleared
-        clear_en_passant(current_turn);
+        // Clear expired en passant flags.
+        clearEnPassant(currentTurn);
 
         TeamColor opponent_color;
-        if (current_turn == TeamColor.BLACK){
+        if (currentTurn == TeamColor.BLACK){
             opponent_color = TeamColor.WHITE;
         } else {
             opponent_color = TeamColor.BLACK;
@@ -108,7 +107,7 @@ public class ChessGame {
             throw new InvalidMoveException("There is no piece here");
         }
 
-        if (moving_piece.getTeamColor() != this.current_turn) {
+        if (moving_piece.getTeamColor() != this.currentTurn) {
             throw new InvalidMoveException("This is not the current player's piece");
         }
 
@@ -127,7 +126,7 @@ public class ChessGame {
             this.board.addPiece(end_position, moving_piece);
 
             // any piece that has moved can't castle
-            moving_piece.setCastle_flag(false);
+            moving_piece.setCastleFlag(false);
 
             // now we need to change the turn over
             setTeamTurn(opponent_color);
@@ -139,7 +138,7 @@ public class ChessGame {
         ChessPosition end_position = move.getEndPosition();
 
         TeamColor opponent_color;
-        if (current_turn == TeamColor.BLACK) {
+        if (currentTurn == TeamColor.BLACK) {
             opponent_color = TeamColor.WHITE;
         } else {
             opponent_color = TeamColor.BLACK;
@@ -165,7 +164,7 @@ public class ChessGame {
                 this.board.addPiece(rook_start, null);
                 this.board.addPiece(rook_end, rook);
 
-                rook.setCastle_flag(false);
+                rook.setCastleFlag(false);
             }
 
             // Queenside castle
@@ -179,7 +178,7 @@ public class ChessGame {
                 this.board.addPiece(rook_start, null);
                 this.board.addPiece(rook_end, rook);
 
-                rook.setCastle_flag(false);
+                rook.setCastleFlag(false);
             }
         }
 
@@ -188,7 +187,7 @@ public class ChessGame {
         this.board.addPiece(end_position, moving_piece);
 
         // King can never castle again after moving
-        moving_piece.setCastle_flag(false);
+        moving_piece.setCastleFlag(false);
 
         // Change turns
         setTeamTurn(opponent_color);
@@ -197,30 +196,11 @@ public class ChessGame {
     private Collection<ChessMove> getCastlingMoves(ChessPosition kingPosition) {
         Collection<ChessMove> castleMoves = new ArrayList<>();
 
-        if (canCastle(kingPosition, true)) {
-            castleMoves.add(
-                    new ChessMove(
-                            kingPosition,
-                            new ChessPosition(
-                                    kingPosition.getRow(),
-                                    kingPosition.getColumn() + 2
-                            ),
-                            null
-                    )
-            );
-        }
-
-        if (canCastle(kingPosition, false)) {
-            castleMoves.add(
-                    new ChessMove(
-                            kingPosition,
-                            new ChessPosition(
-                                    kingPosition.getRow(),
-                                    kingPosition.getColumn() - 2
-                            ),
-                            null
-                    )
-            );
+        for (int direction : new int[]{1, -1}) {
+            if (canCastle(kingPosition, direction == 1)) {
+                castleMoves.add(new ChessMove(kingPosition,
+                        new ChessPosition(kingPosition.getRow(), kingPosition.getColumn() + 2 * direction), null));
+            }
         }
 
         return castleMoves;
@@ -231,7 +211,7 @@ public class ChessGame {
         ChessPiece king = board.getPiece(kingPosition);
 
         // King must still have castling rights
-        if (!king.isCastle_flag()) {
+        if (!king.isCastleFlag()) {
             return false;
         }
 
@@ -256,7 +236,7 @@ public class ChessGame {
         if (rook == null
                 || rook.getPieceType() != ChessPiece.PieceType.ROOK
                 || rook.getTeamColor() != king.getTeamColor()
-                || !rook.isCastle_flag()) {
+                || !rook.isCastleFlag()) {
             return false;
         }
 
@@ -308,7 +288,7 @@ public class ChessGame {
         ChessPiece.PieceType promotion = move.getPromotionPiece();
 
         TeamColor opponent_color;
-        if (current_turn == TeamColor.BLACK){
+        if (currentTurn == TeamColor.BLACK){
             opponent_color = TeamColor.WHITE;
         } else {
             opponent_color = TeamColor.BLACK;
@@ -319,7 +299,7 @@ public class ChessGame {
         // if neither of these things are true, we're good to make the move
         // but first we can promote if we have to
         if (promotion != null){
-            moving_piece = new ChessPiece(current_turn, promotion);
+            moving_piece = new ChessPiece(currentTurn, promotion);
         }
 
         boolean enPassant = false;
@@ -346,18 +326,18 @@ public class ChessGame {
         if(moving_piece.getPieceType() == ChessPiece.PieceType.PAWN
                 && (start_position.getRow() == 2 || start_position.getRow() == 7)
                 && (end_position.getRow() == 4 || end_position.getRow() == 5)){
-            moving_piece.setEn_passant_flag(true);
+            moving_piece.setEnPassantFlag(true);
         }
 
         // now we need to change the turn over
         setTeamTurn(opponent_color);
     }
 
-    private void clear_en_passant(TeamColor color){
+    private void clearEnPassant(TeamColor color){
         Collection<ChessPosition> pawn_positions = getRelevantPositions(color, ChessPiece.PieceType.PAWN);
         for(ChessPosition pawn_position : pawn_positions){
             ChessPiece pawn = this.board.getPiece(pawn_position);
-            pawn.setEn_passant_flag(false);
+            pawn.setEnPassantFlag(false);
         }
     }
 
@@ -414,7 +394,6 @@ public class ChessGame {
             possible_opponent_positions.add(move.getEndPosition());
         }
         for (ChessPosition position : possible_opponent_positions) {
-//            System.out.println("Piece that could be attacked: " + this.board.getPiece(position));
             if (position.equals(king_position)){
                 return true;
             }
