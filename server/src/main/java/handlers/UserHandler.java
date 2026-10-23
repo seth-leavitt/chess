@@ -6,10 +6,9 @@ import requests.*;
 import results.LoginResult;
 import results.LogoutResult;
 import results.RegistrationResult;
+import service.ServiceException;
 import service.UserService;
 import com.google.gson.Gson;
-
-import java.util.Map;
 
 public class UserHandler {
     Gson serializer = new Gson();
@@ -19,48 +18,28 @@ public class UserHandler {
         this.userService = userService;
     }
 
-    public void registerUser(Context context){
+    public void registerUser(Context context) throws DataAccessException {
         RegistrationRequest request = serializer.fromJson(context.body(), RegistrationRequest.class);
-        try {
-            RegistrationResult result = this.userService.register(request);
-            context.contentType("application/json");
-            context.status(200).result(serializer.toJson(result));
-        } catch (DataAccessException e) {
-            context.status(500).result(serializer.toJson(
-                    Map.of("message", "Error: " + e.getMessage())
-            ));
-        }
-
+        RegistrationResult result = this.userService.register(request);
+        context.contentType("application/json");
+        context.status(200).result(serializer.toJson(result));
     }
 
-    public void loginUser(Context context){
+    public void loginUser(Context context) throws DataAccessException {
         LoginRequest request = serializer.fromJson(context.body(), LoginRequest.class);
-        try {
-            LoginResult result = this.userService.login(request);
-            context.contentType("application/json");
-            context.status(200).result(serializer.toJson(result));
-        } catch (DataAccessException e){
-            context.status(500).result(serializer.toJson(
-                    Map.of("message", "Error: " + e.getMessage())
-            ));
-        }
+        LoginResult result = this.userService.login(request);
+        context.contentType("application/json");
+        context.status(200).result(serializer.toJson(result));
     }
 
-    public void logoutUser(Context context){
-        try {
-            String authToken = context.header("Authorization");
-            LogoutRequest request = new LogoutRequest(authToken);
-            LogoutResult result = this.userService.logout(request);
-            if(result.getStatus()){
-                context.status(200).result(serializer.toJson(result));
-            } else {
-                context.status(401).result(serializer.toJson(Map.of("message", "session does not exist")));
-            }
+    public void logoutUser(Context context) throws DataAccessException {
+        String authToken = context.header("Authorization");
+        LogoutRequest request = new LogoutRequest(authToken);
+        LogoutResult result = this.userService.logout(request);
+        if (!result.getStatus()) {
+            throw new ServiceException(401, "Session does not exist");
         }
-        catch (DataAccessException e){
-            context.status(500).result(serializer.toJson(
-                    Map.of("message", "Error: " + e.getMessage())
-            ));
-        }
+        context.contentType("application/json");
+        context.status(200).result(serializer.toJson(result));
     }
 }
