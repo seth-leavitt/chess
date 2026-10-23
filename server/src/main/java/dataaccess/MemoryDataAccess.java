@@ -1,16 +1,19 @@
 package dataaccess;
 
 import java.util.HashMap;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.UUID;
 
 import chess.ChessGame;
 import model.AuthData;
+import model.GameData;
 import model.UserData;
 
 public class MemoryDataAccess implements DataAccess {
     HashMap<String, UserData> users = new HashMap<>();
     HashMap<String, AuthData> authTokens = new HashMap<>();
-    HashMap<Integer, ChessGame> games = new HashMap<>();
+    HashMap<Integer, GameData> games = new HashMap<>();
     private int nextGameID = 1;
 
     public AuthData registerUser(UserData userData) throws DataAccessException {
@@ -30,8 +33,8 @@ public class MemoryDataAccess implements DataAccess {
         return authData;
     }
 
-    public AuthData getAuthByToken(String authToken) {
-        return authTokens.get(authToken);
+    public AuthData getAuthByToken(String authToken){
+        return authTokens.getOrDefault(authToken, null);
     }
 
     public boolean logoutUser(String authToken) throws DataAccessException {
@@ -47,14 +50,18 @@ public class MemoryDataAccess implements DataAccess {
         return users.getOrDefault(username, null);
     }
 
-    public int addGame(ChessGame game) {
+    public int addGame(String gameName, ChessGame game) {
         int gameID = nextGameID++;
-        games.put(gameID, game);
+        games.put(gameID, new GameData(gameID, gameName, null, null, game));
         return gameID;
     }
 
-    public ChessGame getGame(int gameID) {
+    public GameData getGame(int gameID) {
         return games.get(gameID);
+    }
+
+    public Collection<GameData> listGames() {
+        return new ArrayList<>(games.values());
     }
 
     public void clear() {

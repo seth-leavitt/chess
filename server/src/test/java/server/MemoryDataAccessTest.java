@@ -16,7 +16,7 @@ public class MemoryDataAccessTest {
     @Test
     void clear() throws DataAccessException {
         AuthData authData = da.registerUser(new UserData("username", "password"));
-        var gameID = da.addGame(new ChessGame());
+        var gameID = da.addGame("Test game", new ChessGame());
 
         da.clear();
 
