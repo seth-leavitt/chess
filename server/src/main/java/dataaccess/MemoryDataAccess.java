@@ -60,6 +60,10 @@ public class MemoryDataAccess implements DataAccess {
         return games.get(gameID);
     }
 
+    public void updateGame(GameData game) {
+        games.put(game.getGameID(), game);
+    }
+
     public Collection<GameData> listGames() {
         return new ArrayList<>(games.values());
     }

@@ -15,6 +15,7 @@ public interface DataAccess {
     UserData getUser(String username);
     int addGame(String gameName, ChessGame game);
     GameData getGame(int gameID);
+    void updateGame(GameData game);
     Collection<GameData> listGames();
     void clear();
 }
