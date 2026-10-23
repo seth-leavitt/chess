@@ -1,8 +1,4 @@
-package server;
-
-import io.javalin.Javalin;
-
-import java.util.UUID;
+package passoff.server;
 
 public class ServerMain {
     public static void main(String[] args) {

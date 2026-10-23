@@ -1,4 +1,4 @@
-package server;
+package passoff.server;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonParseException;
@@ -46,7 +46,7 @@ public class Server {
                         .result(serializer.toJson(Map.of("message", "Error: bad request"))));
         javalin.exception(DataAccessException.class, (exception, context) ->
                 context.status(500).contentType("application/json")
-                        .result(serializer.toJson(Map.of("message", "Error: internal server error"))));
+                        .result(serializer.toJson(Map.of("message", "Error: internal passoff.server error"))));
 
         // Register your endpoints and exception handlers here.
         javalin.post("/user", userHandler::registerUser);
