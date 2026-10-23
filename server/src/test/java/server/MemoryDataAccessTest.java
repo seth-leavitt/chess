@@ -1,5 +1,6 @@
 package server;
 
+import chess.ChessGame;
 import dataaccess.DataAccessException;
 import dataaccess.MemoryDataAccess;
 import model.AuthData;
@@ -13,8 +14,16 @@ import static org.junit.jupiter.api.Assertions.*;
 public class MemoryDataAccessTest {
     private MemoryDataAccess da;
     @Test
-    void clear(){
-        var da = new MemoryDataAccess();
+    void clear() throws DataAccessException {
+        AuthData authData = da.registerUser(new UserData("username", "password"));
+        var gameID = da.addGame(new ChessGame());
+
+        da.clear();
+
+        assertNull(da.getUser("username"));
+        assertNull(da.getAuthByToken(authData.getAuthToken()));
+        assertNull(da.getGame(gameID));
+        assertNotNull(da.registerUser(new UserData("username", "password")));
     }
 
     @BeforeEach
@@ -38,7 +47,7 @@ public class MemoryDataAccessTest {
         assertNotNull(authData);
         assertFalse(authData.getAuthToken().isBlank());
         assertEquals(savedUser.getUsername(), authData.getUsername());
-        assertSame(authData, da.getAuth(authData.getAuthToken()));
+        assertSame(authData, da.getAuthByToken(authData.getAuthToken()));
     }
     @Test
     void registeringDuplicateUsernameThrows() throws DataAccessException {
@@ -84,12 +93,12 @@ public class MemoryDataAccessTest {
 
         assertNotEquals(registration.getAuthToken(), login.getAuthToken());
         assertEquals("username", login.getUsername());
-        assertSame(registration, da.getAuth(registration.getAuthToken()));
-        assertSame(login, da.getAuth(login.getAuthToken()));
+        assertSame(registration, da.getAuthByToken(registration.getAuthToken()));
+        assertSame(login, da.getAuthByToken(login.getAuthToken()));
 
         assertTrue(da.logoutUser(registration.getAuthToken()));
-        assertNull(da.getAuth(registration.getAuthToken()));
-        assertSame(login, da.getAuth(login.getAuthToken()));
+        assertNull(da.getAuthByToken(registration.getAuthToken()));
+        assertSame(login, da.getAuthByToken(login.getAuthToken()));
         assertSame(user, da.getUser("username"));
         assertFalse(da.logoutUser(registration.getAuthToken()));
     }
@@ -102,7 +111,7 @@ public class MemoryDataAccessTest {
 
     @Test
     void unknownTokenReturnsNull() {
-        assertNull(da.getAuth("invalid-token"));
-        assertNull(da.getAuth(null));
+        assertNull(da.getAuthByToken("invalid-token"));
+        assertNull(da.getAuthByToken(null));
     }
 }
