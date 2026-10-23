@@ -10,7 +10,8 @@ import model.UserData;
 public class MemoryDataAccess implements DataAccess {
     HashMap<String, UserData> users = new HashMap<>();
     HashMap<String, AuthData> authTokens = new HashMap<>();
-    HashMap<UUID, ChessGame> games = new HashMap<>();
+    HashMap<Integer, ChessGame> games = new HashMap<>();
+    private int nextGameID = 1;
 
     public AuthData registerUser(UserData userData) throws DataAccessException {
         if (getUser(userData.getUsername()) != null){
@@ -29,7 +30,7 @@ public class MemoryDataAccess implements DataAccess {
         return authData;
     }
 
-    public AuthData getAuth(String authToken) {
+    public AuthData getAuthByToken(String authToken) {
         return authTokens.get(authToken);
     }
 
@@ -46,13 +47,13 @@ public class MemoryDataAccess implements DataAccess {
         return users.getOrDefault(username, null);
     }
 
-    public UUID createGame(ChessGame game) {
-        UUID gameID = UUID.randomUUID();
+    public int addGame(ChessGame game) {
+        int gameID = nextGameID++;
         games.put(gameID, game);
         return gameID;
     }
 
-    public ChessGame getGame(UUID gameID) {
+    public ChessGame getGame(int gameID) {
         return games.get(gameID);
     }
 

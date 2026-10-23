@@ -6,9 +6,11 @@ import dataaccess.DataAccess;
 import dataaccess.DataAccessException;
 import dataaccess.MemoryDataAccess;
 import handlers.DatabaseHandler;
+import handlers.GameHandler;
 import handlers.UserHandler;
 import io.javalin.*;
 import service.DatabaseService;
+import service.GameService;
 import service.ServiceException;
 import service.UserService;
 
@@ -26,10 +28,12 @@ public class Server {
         // Services
         UserService userService = new UserService(dataAccess);
         DatabaseService databaseService = new DatabaseService(dataAccess);
+        GameService gameService = new GameService(dataAccess);
 
         // Handlers
         UserHandler userHandler = new UserHandler(userService);
         DatabaseHandler databaseHandler = new DatabaseHandler(databaseService);
+        GameHandler gameHandler = new GameHandler(gameService);
 
         javalin = Javalin.create(config -> config.staticFiles.add("web"));
 
@@ -49,6 +53,7 @@ public class Server {
         javalin.post("/session", userHandler::loginUser);
         javalin.delete("/session", userHandler::logoutUser);
         javalin.delete("/db", databaseHandler::clear);
+        javalin.post("/game", gameHandler::createGame);
     }
 
     public int run(int desiredPort) {
