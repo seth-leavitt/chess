@@ -4,6 +4,7 @@ import dataaccess.DataAccess;
 import dataaccess.DataAccessException;
 import model.AuthData;
 import model.UserData;
+import org.mindrot.jbcrypt.BCrypt;
 import requests.LoginRequest;
 import requests.LogoutRequest;
 import requests.RegistrationRequest;
@@ -35,7 +36,7 @@ public class UserService {
             throw new ServiceException(400, "Username and password are required");
         }
         UserData user = dataAccess.getUser(request.getUsername());
-        if (user == null || !Objects.equals(user.getPassword(), request.getPassword())) {
+        if (user == null || !BCrypt.checkpw(request.getPassword(), user.getPassword())) {
             throw new ServiceException(401, "Unauthorized");
         }
         AuthData authData = dataAccess.loginUser(user);

@@ -31,21 +31,21 @@ public class DatabaseManager {
         }
     }
 
-    void storeUserPassword(String username, String clearTextPassword) throws DataAccessException {
+    static void storeUserPassword(String username, String clearTextPassword) throws DataAccessException {
         String hashedPassword = BCrypt.hashpw(clearTextPassword, BCrypt.gensalt());
 
         // Write the hashed password to the database along with the user's other information
         writeHashedPasswordToDatabase(username, hashedPassword);
     }
 
-    boolean verifyUser(String username, String providedClearTextPassword) throws DataAccessException {
+    static boolean verifyUser(String username, String providedClearTextPassword) throws DataAccessException {
         // Read the previously hashed password from the database
         var hashedPassword = readHashedPasswordFromDatabase(username);
 
         return BCrypt.checkpw(providedClearTextPassword, hashedPassword);
     }
 
-    void writeHashedPasswordToDatabase(String username, String hashedPassword) throws DataAccessException {
+    static void writeHashedPasswordToDatabase(String username, String hashedPassword) throws DataAccessException {
 
         var statement = "INSERT INTO users (username, password) VALUES (?, ?)";
 
@@ -62,7 +62,7 @@ public class DatabaseManager {
         }
     }
 
-    String readHashedPasswordFromDatabase(String username) throws DataAccessException {
+    static String readHashedPasswordFromDatabase(String username) throws DataAccessException {
         var statement = "SELECT password FROM users WHERE username = ?";
 
         try (var conn = DatabaseManager.getConnection();

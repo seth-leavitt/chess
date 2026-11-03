@@ -9,9 +9,9 @@ import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.Collection;
 import java.util.List;
+import java.util.UUID;
 
 public class DatabaseDataAccess implements DataAccess{
-    DatabaseManager sqlDB = new DatabaseManager();
 
     public DatabaseDataAccess() throws DataAccessException {
         configureDatabase();
@@ -61,12 +61,36 @@ public class DatabaseDataAccess implements DataAccess{
 
     @Override
     public AuthData registerUser(UserData user) throws DataAccessException {
-        return null;
+        String clearTextPassword = user.getPassword();
+        String username = user.getUsername();
+
+        DatabaseManager.storeUserPassword(username, clearTextPassword);
+
+        return loginUser(user);
     }
 
     @Override
     public AuthData loginUser(UserData user) throws DataAccessException {
-        return null;
+        if (getUser(user.getUsername()) == null) {
+            throw new DataAccessException("User does not exist");
+        }
+
+        AuthData authData = new AuthData(
+                UUID.randomUUID().toString(), user.getUsername());
+
+        var statement = "INSERT INTO auths (authToken, username) VALUES (?, ?)";
+
+        try (var connection = DatabaseManager.getConnection();
+             var preparedStatement = connection.prepareStatement(statement)) {
+
+            preparedStatement.setString(1, authData.getAuthToken());
+            preparedStatement.setString(2, user.getUsername());
+            preparedStatement.executeUpdate();
+
+            return authData;
+        } catch (SQLException ex) {
+            throw new DataAccessException("failed to store authentication token", ex);
+        }
     }
 
     @Override
@@ -80,8 +104,25 @@ public class DatabaseDataAccess implements DataAccess{
     }
 
     @Override
-    public UserData getUser(String username) {
-        return null;
+    public UserData getUser(String username) throws DataAccessException {
+        var statement = "SELECT username, password FROM users WHERE username = ?";
+
+        try (var connection = DatabaseManager.getConnection();
+             var preparedStatement = connection.prepareStatement(statement)) {
+
+            preparedStatement.setString(1, username);
+
+            try (var rs = preparedStatement.executeQuery()) {
+                if (rs.next()) {
+                    return new UserData(
+                            rs.getString("username"),
+                            rs.getString("password"));
+                }
+                return null;
+            }
+        } catch (SQLException ex) {
+            throw new DataAccessException("failed to get user from database", ex);
+        }
     }
 
     @Override

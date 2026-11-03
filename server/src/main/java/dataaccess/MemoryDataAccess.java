@@ -9,6 +9,7 @@ import chess.ChessGame;
 import model.AuthData;
 import model.GameData;
 import model.UserData;
+import org.mindrot.jbcrypt.BCrypt;
 
 public class MemoryDataAccess implements DataAccess {
     HashMap<String, UserData> users = new HashMap<>();
@@ -20,7 +21,8 @@ public class MemoryDataAccess implements DataAccess {
         if (getUser(userData.getUsername()) != null){
             throw new DataAccessException("User Already Exists");
         }
-        users.put(userData.getUsername(), userData);
+        UserData hashedUserData = new UserData(userData.getUsername(), BCrypt.hashpw(userData.getPassword(), BCrypt.gensalt()));
+        users.put(userData.getUsername(), hashedUserData);
         return loginUser(userData);
     }
 

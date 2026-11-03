@@ -12,7 +12,7 @@ public interface DataAccess {
     AuthData loginUser(UserData user) throws DataAccessException;
     AuthData getAuthByToken(String authToken) throws DataAccessException;
     boolean logoutUser(String authToken) throws DataAccessException;
-    UserData getUser(String username);
+    UserData getUser(String username) throws DataAccessException;
     int addGame(String gameName, ChessGame game);
     GameData getGame(int gameID);
     void updateGame(GameData game);
