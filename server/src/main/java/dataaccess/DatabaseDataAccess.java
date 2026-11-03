@@ -95,7 +95,20 @@ public class DatabaseDataAccess implements DataAccess{
 
     @Override
     public AuthData getAuthByToken(String authToken) throws DataAccessException {
-        return null;
+        var statement = "SELECT authToken, username FROM auths WHERE authToken = ?";
+        try (var connection = DatabaseManager.getConnection();
+             var preparedStatement = connection.prepareStatement(statement)){
+            preparedStatement.setString(1, authToken);
+
+            try (var rs = preparedStatement.executeQuery()){
+                if (rs.next()){
+                    return new AuthData(rs.getString("authToken"), rs.getString("username"));
+                }
+                return null;
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException("failes to get authData from database" , e);
+        }
     }
 
     @Override
