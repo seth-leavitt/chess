@@ -13,9 +13,9 @@ public interface DataAccess {
     AuthData getAuthByToken(String authToken) throws DataAccessException;
     boolean logoutUser(String authToken) throws DataAccessException;
     UserData getUser(String username) throws DataAccessException;
-    int addGame(String gameName, ChessGame game);
-    GameData getGame(int gameID);
-    void updateGame(GameData game);
+    int addGame(String gameName, ChessGame game) throws DataAccessException;
+    GameData getGame(int gameID) throws DataAccessException;
+    void updateGame(GameData game) throws DataAccessException;
     Collection<GameData> listGames();
     void clear();
 }
