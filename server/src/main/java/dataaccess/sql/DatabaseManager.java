@@ -1,7 +1,9 @@
-package dataaccess;
+package dataaccess.sql;
 
 import java.sql.*;
 import java.util.Properties;
+
+import dataaccess.DataAccessException;
 import org.mindrot.jbcrypt.BCrypt;
 
 

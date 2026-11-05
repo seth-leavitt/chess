@@ -4,7 +4,7 @@ import com.google.gson.Gson;
 import com.google.gson.JsonParseException;
 import dataaccess.DataAccess;
 import dataaccess.DataAccessException;
-import dataaccess.DatabaseDataAccess;
+import dataaccess.sql.DatabaseDataAccess;
 import handlers.DatabaseHandler;
 import handlers.GameHandler;
 import handlers.UserHandler;

@@ -1,7 +1,9 @@
-package dataaccess;
+package dataaccess.sql;
 
 import chess.ChessGame;
 import com.google.gson.Gson;
+import dataaccess.DataAccess;
+import dataaccess.DataAccessException;
 import model.AuthData;
 import model.GameData;
 import model.UserData;
@@ -12,7 +14,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.UUID;
 
-public class DatabaseDataAccess implements DataAccess{
+public class DatabaseDataAccess implements DataAccess {
 
     public DatabaseDataAccess() throws DataAccessException {
         configureDatabase();
