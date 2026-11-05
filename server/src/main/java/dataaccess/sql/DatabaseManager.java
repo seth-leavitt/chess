@@ -40,13 +40,6 @@ public class DatabaseManager {
         writeHashedPasswordToDatabase(username, hashedPassword);
     }
 
-    static boolean verifyUser(String username, String providedClearTextPassword) throws DataAccessException {
-        // Read the previously hashed password from the database
-        var hashedPassword = readHashedPasswordFromDatabase(username);
-
-        return BCrypt.checkpw(providedClearTextPassword, hashedPassword);
-    }
-
     static void writeHashedPasswordToDatabase(String username, String hashedPassword) throws DataAccessException {
 
         var statement = "INSERT INTO users (username, password) VALUES (?, ?)";
@@ -61,35 +54,6 @@ public class DatabaseManager {
         } catch (SQLException ex) {
             throw new DataAccessException(
                     "failed to write password to database", ex);
-        }
-    }
-
-    static String readHashedPasswordFromDatabase(String username) throws DataAccessException {
-        var statement = "SELECT password FROM users WHERE username = ?";
-
-        try (var conn = DatabaseManager.getConnection();
-             var preparedStatement = conn.prepareStatement(statement)) {
-
-            preparedStatement.setString(1, username);
-
-            try (var rs = preparedStatement.executeQuery()) {
-                if (rs.next()) {
-                    return rs.getString("password");
-                }
-                return null;
-            }
-        } catch (SQLException ex) {
-            throw new DataAccessException("failed to read password from database", ex);
-        }
-    }
-
-    public void example() throws Exception {
-        try (var conn = DatabaseManager.getConnection()) {
-            try (var preparedStatement = conn.prepareStatement("SELECT 1+1")) {
-                var rs = preparedStatement.executeQuery();
-                rs.next();
-                System.out.println(rs.getInt(1));
-            }
         }
     }
 
