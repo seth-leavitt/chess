@@ -18,5 +18,6 @@
     <orderEntry type="library" name="google.code.gson1" level="project" />
     <orderEntry type="library" name="mindrot.jbcrypt" level="project" />
     <orderEntry type="library" name="mindrot.jbcrypt1" level="project" />
+    <orderEntry type="library" name="mysql.connector.j" level="project" />
   </component>
 </module>

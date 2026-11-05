@@ -4,7 +4,7 @@ import com.google.gson.Gson;
 import com.google.gson.JsonParseException;
 import dataaccess.DataAccess;
 import dataaccess.DataAccessException;
-import dataaccess.MemoryDataAccess;
+import dataaccess.DatabaseDataAccess;
 import handlers.DatabaseHandler;
 import handlers.GameHandler;
 import handlers.UserHandler;
@@ -23,7 +23,12 @@ public class Server {
     public Server() {
         // construct all of the stuff we need
         // DAO
-        DataAccess dataAccess = new MemoryDataAccess();
+        DataAccess dataAccess;
+        try {
+            dataAccess = new DatabaseDataAccess();
+        } catch (DataAccessException ex) {
+            throw new RuntimeException("failed to initialize database", ex);
+        }
 
         // Services
         UserService userService = new UserService(dataAccess);
