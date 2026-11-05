@@ -1,6 +1,6 @@
 package handlers;
 
-import dataaccess.DataAccess;
+import dataaccess.DataAccessException;
 import io.javalin.http.Context;
 import service.DatabaseService;
 
@@ -10,7 +10,7 @@ public class DatabaseHandler {
         this.service = service;
     }
 
-    public void clear(Context context){
+    public void clear(Context context) throws DataAccessException{
         service.clear();
     }
 }

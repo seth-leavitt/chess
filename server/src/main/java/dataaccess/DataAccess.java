@@ -16,6 +16,6 @@ public interface DataAccess {
     int addGame(String gameName, ChessGame game) throws DataAccessException;
     GameData getGame(int gameID) throws DataAccessException;
     void updateGame(GameData game) throws DataAccessException;
-    Collection<GameData> listGames();
-    void clear();
+    Collection<GameData> listGames() throws DataAccessException;
+    void clear() throws DataAccessException;
 }

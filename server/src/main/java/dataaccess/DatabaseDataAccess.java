@@ -8,8 +8,8 @@ import model.UserData;
 
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.ArrayList;
 import java.util.Collection;
-import java.util.List;
 import java.util.UUID;
 
 public class DatabaseDataAccess implements DataAccess{
@@ -18,7 +18,7 @@ public class DatabaseDataAccess implements DataAccess{
         configureDatabase();
     }
 
-    private void configureDatabase() {
+    private void configureDatabase() throws DataAccessException {
         var statement = """
             CREATE TABLE IF NOT EXISTS users (
                 username VARCHAR(255) PRIMARY KEY,
@@ -55,8 +55,8 @@ public class DatabaseDataAccess implements DataAccess{
                 preparedStatement2.executeUpdate();
                 preparedStatement3.executeUpdate();
             }
-        } catch (SQLException | DataAccessException e) {
-            throw new RuntimeException("failed to configure database", e);
+        } catch (SQLException e) {
+            throw new DataAccessException("failed to configure database", e);
         }
     }
 
@@ -114,7 +114,16 @@ public class DatabaseDataAccess implements DataAccess{
 
     @Override
     public boolean logoutUser(String authToken) throws DataAccessException {
-        return false;
+        var statement = "DELETE FROM auths WHERE authToken = ?";
+
+        try (var connection = DatabaseManager.getConnection();
+             var preparedStatement = connection.prepareStatement(statement)) {
+
+            preparedStatement.setString(1, authToken);
+            return preparedStatement.executeUpdate() > 0;
+        } catch (SQLException ex) {
+            throw new DataAccessException("failed to delete authentication token", ex);
+        }
     }
 
     @Override
@@ -205,12 +214,52 @@ public class DatabaseDataAccess implements DataAccess{
     }
 
     @Override
-    public Collection<GameData> listGames() {
-        return List.of();
+    public Collection<GameData> listGames() throws DataAccessException {
+        var statement = "SELECT gameID, gameName, whiteUsername, blackUsername, game FROM games";
+
+        try (var connection = DatabaseManager.getConnection();
+             var preparedStatement = connection.prepareStatement(statement)) {
+
+            Collection<GameData> games = new ArrayList<>();
+            try (var rs = preparedStatement.executeQuery()) {
+                while (rs.next()) {
+                    games.add(new GameData(
+                            rs.getInt("gameID"),
+                            rs.getString("gameName"),
+                            rs.getString("whiteUsername"),
+                            rs.getString("blackUsername"),
+                            new Gson().fromJson(rs.getString("game"), ChessGame.class)));
+                }
+            }
+            return games;
+        } catch (SQLException ex) {
+            throw new DataAccessException("failed to list games from database", ex);
+        }
     }
 
     @Override
-    public void clear() {
+    public void clear() throws DataAccessException {
+        var statement = "DELETE FROM auths";
+        var statement2 = "DELETE FROM games";
+        var statement3 = "DELETE FROM users";
 
+        try (var connection = DatabaseManager.getConnection();
+             var preparedStatement1 = connection.prepareStatement(statement);
+             var preparedStatement2 = connection.prepareStatement(statement2);
+             var preparedStatement3 = connection.prepareStatement(statement3)) {
+
+            connection.setAutoCommit(false);
+            try {
+                preparedStatement1.executeUpdate();
+                preparedStatement2.executeUpdate();
+                preparedStatement3.executeUpdate();
+                connection.commit();
+            } catch (SQLException ex) {
+                connection.rollback();
+                throw ex;
+            }
+        } catch (SQLException ex) {
+            throw new DataAccessException("failed to clear database", ex);
+        }
     }
 }
