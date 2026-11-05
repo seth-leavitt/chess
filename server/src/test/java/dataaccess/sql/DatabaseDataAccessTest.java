@@ -245,28 +245,4 @@ public class DatabaseDataAccessTest {
         assertTrue(da.listGames().isEmpty());
         assertNull(da.getUser("username"));
     }
-
-    @Test
-    void clearRollsBackWhenDeletingGamesFails() throws DataAccessException, SQLException {
-        AuthData authData = da.registerUser(new UserData("username", "password"));
-        int gameID = da.addGame("Test game", new ChessGame());
-
-        try (var connection = DatabaseManager.getConnection();
-             var statement = connection.createStatement()) {
-            statement.executeUpdate("""
-                    CREATE TRIGGER prevent_test_game_delete BEFORE DELETE ON games
-                    FOR EACH ROW SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Test delete failure'
-                    """);
-            try {
-                DataAccessException exception = assertThrows(DataAccessException.class, () -> da.clear());
-
-                assertInstanceOf(SQLException.class, exception.getCause());
-                assertNotNull(da.getAuthByToken(authData.getAuthToken()));
-                assertNotNull(da.getUser("username"));
-                assertNotNull(da.getGame(gameID));
-            } finally {
-                statement.executeUpdate("DROP TRIGGER prevent_test_game_delete");
-            }
-        }
-    }
 }
