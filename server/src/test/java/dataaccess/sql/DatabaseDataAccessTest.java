@@ -1,12 +1,19 @@
 package dataaccess.sql;
 
+import chess.ChessGame;
+import chess.ChessMove;
+import chess.ChessPosition;
+import chess.InvalidMoveException;
 import dataaccess.DataAccessException;
 import model.AuthData;
+import model.GameData;
 import model.UserData;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mindrot.jbcrypt.BCrypt;
+
+import java.sql.SQLException;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -134,5 +141,132 @@ public class DatabaseDataAccessTest {
     void unknownUsernameReturnsNull() throws DataAccessException {
         assertNull(da.getUser("nobody"));
         assertNull(da.getUser(null));
+    }
+
+    @Test
+    void addGameStoresChessStateAndReturnsDistinctIDs() throws DataAccessException, InvalidMoveException {
+        ChessGame game = new ChessGame();
+        game.makeMove(new ChessMove(new ChessPosition(2, 5), new ChessPosition(4, 5), null));
+
+        int firstID = da.addGame("Test game", game);
+        int secondID = da.addGame("Test game", new ChessGame());
+
+        assertTrue(firstID > 0);
+        assertTrue(secondID > 0);
+        assertNotEquals(firstID, secondID);
+        GameData savedGame = da.getGame(firstID);
+        assertNotNull(savedGame);
+        assertEquals(firstID, savedGame.getGameID());
+        assertEquals("Test game", savedGame.getGameName());
+        assertNull(savedGame.getWhiteUsername());
+        assertNull(savedGame.getBlackUsername());
+        assertEquals(game, savedGame.getGame());
+        assertEquals(new ChessGame(), da.getGame(secondID).getGame());
+    }
+
+    @Test
+    void addGameWithoutNameThrows() throws DataAccessException {
+        assertThrows(DataAccessException.class, () -> da.addGame(null, new ChessGame()));
+
+        assertTrue(da.listGames().isEmpty());
+    }
+
+    @Test
+    void unknownGameIDReturnsNull() throws DataAccessException {
+        da.addGame("Existing game", new ChessGame());
+
+        assertNull(da.getGame(-1));
+    }
+
+    @Test
+    void updateGameStoresAllFieldsWithoutChangingOtherGames() throws DataAccessException {
+        int gameID = da.addGame("Original game", new ChessGame());
+        int otherID = da.addGame("Other game", new ChessGame());
+        ChessGame game = new ChessGame();
+        game.setTeamTurn(ChessGame.TeamColor.BLACK);
+
+        da.updateGame(new GameData(gameID, "Updated game", "white", "black", game));
+
+        GameData savedGame = da.getGame(gameID);
+        assertNotNull(savedGame);
+        assertEquals(gameID, savedGame.getGameID());
+        assertEquals("Updated game", savedGame.getGameName());
+        assertEquals("white", savedGame.getWhiteUsername());
+        assertEquals("black", savedGame.getBlackUsername());
+        assertEquals(game, savedGame.getGame());
+        GameData otherGame = da.getGame(otherID);
+        assertEquals("Other game", otherGame.getGameName());
+        assertNull(otherGame.getWhiteUsername());
+        assertNull(otherGame.getBlackUsername());
+        assertEquals(new ChessGame(), otherGame.getGame());
+    }
+
+    @Test
+    void updateGameWithoutNameThrowsAndDoesntChangeOthers() throws DataAccessException {
+        int gameID = da.addGame("Original game", new ChessGame());
+
+        assertThrows(DataAccessException.class,
+                () -> da.updateGame(new GameData(gameID, null, "white", "black", new ChessGame())));
+
+        GameData savedGame = da.getGame(gameID);
+        assertEquals("Original game", savedGame.getGameName());
+        assertNull(savedGame.getWhiteUsername());
+        assertNull(savedGame.getBlackUsername());
+    }
+
+    @Test
+    void listGamesReturnsEmptyCollectionWhenNoGamesExist() throws DataAccessException {
+        var games = da.listGames();
+
+        assertNotNull(games);
+        assertTrue(games.isEmpty());
+    }
+
+
+    @Test
+    void dataPersistsAcrossDAOInstances() throws DataAccessException {
+        AuthData authData = da.registerUser(new UserData("username", "password"));
+        int gameID = da.addGame("Persistent game", new ChessGame());
+
+        DatabaseDataAccess other = new DatabaseDataAccess();
+
+        assertTrue(BCrypt.checkpw("password", other.getUser("username").getPassword()));
+        assertEquals("username", other.getAuthByToken(authData.getAuthToken()).getUsername());
+        assertEquals("Persistent game", other.getGame(gameID).getGameName());
+        assertEquals(new ChessGame(), other.getGame(gameID).getGame());
+    }
+
+
+    @Test
+    void clearingEmptyDatabaseRepeatedlySucceeds() throws DataAccessException {
+        da.clear();
+        da.clear();
+
+        assertTrue(da.listGames().isEmpty());
+        assertNull(da.getUser("username"));
+    }
+
+    @Test
+    void clearRollsBackWhenDeletingGamesFails() throws DataAccessException, SQLException {
+        AuthData authData = da.registerUser(new UserData("username", "password"));
+        int gameID = da.addGame("Test game", new ChessGame());
+
+        try (var connection = DatabaseManager.getConnection();
+             var statement = connection.createStatement()) {
+            statement.executeUpdate("""
+                    CREATE TRIGGER prevent_test_game_delete BEFORE DELETE ON games
+                    FOR EACH ROW SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Test delete failure'
+                    """);
+            try {
+                DataAccessException exception = assertThrows(DataAccessException.class, () -> da.clear());
+
+                assertInstanceOf(SQLException.class, exception.getCause());
+                assertNotNull(da.getAuthByToken(authData.getAuthToken()));
+                assertNotNull(da.getUser("username"));
+                assertNotNull(da.getGame(gameID));
+            } finally {
+                statement.executeUpdate("DROP TRIGGER prevent_test_game_delete");
+            }
+        }
     }
 }
