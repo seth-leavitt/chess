@@ -1,6 +1,6 @@
-package dataaccess;
+package dataaccess.sql;
 
-import dataaccess.sql.DatabaseDataAccess;
+import dataaccess.DataAccessException;
 import model.AuthData;
 import model.UserData;
 import org.junit.jupiter.api.AfterEach;
