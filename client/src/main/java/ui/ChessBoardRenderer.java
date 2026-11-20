@@ -20,10 +20,14 @@ public class ChessBoardRenderer {
         for(int y = 0; y <= 9; y++){
             for(int x = 0; x <= 9; x++){ // we want to add a border of grayness
                 if (y == 0 || y == 9){
-                    String spaceString = "\u001b[49;1m   ";
+                    String spaceString = "\u001b[39;49;1m   ";
+                    if (x >= 1 && x <= 8){
+                        spaceString = "\u001b[39;49;1m " + (char) ('a' + x - 1) + " "; // I initially had no idea I could do this.
+                        // AI suggested it as a better way to iterate through them and so I used it.
+                    }
                     System.out.print(spaceString);
                 } else if (x == 0 || x ==9){
-                    String spaceString = "\u001b[49;1m   ";
+                    String spaceString = "\u001b[39;49;1m " + y + " ";
                     System.out.print(spaceString);
                 } else { // now we know that we're dealing the board itself
                     ChessPosition position = new ChessPosition(y, x);
