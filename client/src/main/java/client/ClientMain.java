@@ -10,8 +10,8 @@ import java.util.NoSuchElementException;
 import java.util.Scanner;
 
 public class ClientMain {
-    private static final ServerFacade facade = new ServerFacade(8080);
-    private static final Scanner scanner = new Scanner(System.in);
+    private static final ServerFacade FACADE = new ServerFacade(8080);
+    private static final Scanner SCANNER = new Scanner(System.in);
     private static String authToken;
     private static List<ListGamesResponse.GameSummary> games = List.of();
 
@@ -20,9 +20,9 @@ public class ClientMain {
         System.out.println("♕ 240 Chess Client: " + piece);
         help(false);
 
-        while (scanner.hasNextLine()) {
+        while (SCANNER.hasNextLine()) {
 
-            String line = scanner.nextLine().trim().toLowerCase();
+            String line = SCANNER.nextLine().trim().toLowerCase();
             boolean loggedIn = authToken != null;
 
             try {
@@ -89,7 +89,7 @@ public class ClientMain {
     }
 
     public static void logout() throws IOException {
-        facade.logout(authToken);
+        FACADE.logout(authToken);
         authToken = null;
         games = List.of();
         System.out.println("You are logged out.");
@@ -99,7 +99,7 @@ public class ClientMain {
     public static void login() throws IOException {
         String username = prompt("Username:");
         String password = prompt("Password:");
-        var response = facade.login(username, password);
+        var response = FACADE.login(username, password);
         authToken = response.getAuthToken();
         System.out.println("Welcome, " + response.getUsername() + "!");
         help(true);
@@ -108,7 +108,7 @@ public class ClientMain {
     public static void register() throws IOException {
         String username = prompt("Username:");
         String password = prompt("Password:");
-        var response = facade.register(username, password);
+        var response = FACADE.register(username, password);
         authToken = response.authToken();
         System.out.println("Welcome, " + response.username() + "!");
         help(true);
@@ -116,12 +116,12 @@ public class ClientMain {
 
     public static void createGame() throws IOException {
         String gameName = prompt("Game name:");
-        facade.createGame(authToken, gameName);
+        FACADE.createGame(authToken, gameName);
         System.out.println("Created " + gameName + ". Use list to find it and play to join.");
     }
 
     public static void listGames() throws IOException {
-        var response = facade.listGames(authToken);
+        var response = FACADE.listGames(authToken);
         games = response.getGames();
         if(games.isEmpty()){
             System.out.println("There are no games yet. Use create to make one.");
@@ -148,7 +148,7 @@ public class ClientMain {
         } else {
             throw new IllegalArgumentException("Please choose white or black.");
         }
-        facade.joinGame(authToken, playerColor, game.getGameID());
+        FACADE.joinGame(authToken, playerColor, game.getGameID());
         System.out.println("Joined " + game.getGameName() + ".");
         drawBoard(playerColor);
     }
@@ -188,7 +188,7 @@ public class ClientMain {
 
     private static String prompt(String message){
         System.out.println(message);
-        String value = scanner.nextLine().trim();
+        String value = SCANNER.nextLine().trim();
         if(value.isEmpty()){
             throw new IllegalArgumentException("Please enter a value.");
         }
