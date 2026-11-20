@@ -13,7 +13,7 @@ public class ClientMain {
     private static final ServerFacade FACADE = new ServerFacade(8080);
     private static final Scanner SCANNER = new Scanner(System.in);
     private static String authToken;
-    private static List<ListGamesResponse.GameSummary> games = List.of();
+    private static List<GameSummary> games = List.of();
 
     public static void main(String[] args) {
         var piece = new ChessPiece(ChessGame.TeamColor.WHITE, ChessPiece.PieceType.PAWN);
@@ -159,7 +159,7 @@ public class ClientMain {
         drawBoard(ChessGame.TeamColor.WHITE);
     }
 
-    private static ListGamesResponse.GameSummary selectGame(){
+    private static GameSummary selectGame(){
         if(games.isEmpty()){
             System.out.println("Use list to see the available games first.");
             return null;
