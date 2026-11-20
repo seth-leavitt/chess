@@ -76,6 +76,7 @@ public class ServerFacade {
             connection.setRequestMethod("DELETE");
             connection.setDoOutput(true);
             connection.setRequestProperty("Content-Type", "application/json");
+            connection.setRequestProperty("Authorization", authToken);
 
             LogoutRequest request = new LogoutRequest(authToken);
             String jsonRequest = new Gson().toJson(request);

@@ -4,18 +4,18 @@ public class RegisterRequest {
     String username;
 
     final public String getPassword() {
-        return Password;
+        return password;
     }
 
     final public String getUsername(){
         return username;
     }
 
-    String Password;
+    String password;
     String email;
 
-    public RegisterRequest(String password, String username){
-        this.Password = password;
+    public RegisterRequest(String username, String password){
+        this.password = password;
         this.username = username;
     }
 }
