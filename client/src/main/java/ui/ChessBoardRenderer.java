@@ -17,23 +17,33 @@ public class ChessBoardRenderer {
     }
 
     public static void drawChessBoard(ChessBoard board){
+        drawChessBoard(board, ChessGame.TeamColor.WHITE);
+    }
+
+    public static void drawChessBoard(ChessBoard board, ChessGame.TeamColor perspective){
         for(int y = 0; y <= 9; y++){
             for(int x = 0; x <= 9; x++){ // we want to add a border of grayness
+                int row = 9 - y;
+                int column = x;
+                if (perspective == ChessGame.TeamColor.BLACK){
+                    row = y;
+                    column = 9 - x;
+                }
                 if (y == 0 || y == 9){
                     String spaceString = "\u001b[39;49;1m   ";
                     if (x >= 1 && x <= 8){
-                        spaceString = "\u001b[39;49;1m " + (char) ('a' + x - 1) + " "; // I initially had no idea I could do this.
+                        spaceString = "\u001b[39;49;1m " + (char) ('a' + column - 1) + " "; // I initially had no idea I could do this.
                         // AI suggested it as a better way to iterate through them and so I used it.
                     }
                     System.out.print(spaceString);
                 } else if (x == 0 || x ==9){
-                    String spaceString = "\u001b[39;49;1m " + y + " ";
+                    String spaceString = "\u001b[39;49;1m " + row + " ";
                     System.out.print(spaceString);
                 } else { // now we know that we're dealing the board itself
-                    ChessPosition position = new ChessPosition(y, x);
+                    ChessPosition position = new ChessPosition(row, column);
                     ChessPiece piece = board.getPiece(position);
                     String spaceString = "";
-                    if ((x % 2 == 0) ^ !(y % 2 == 0)) { // this should not be the case on the leftmost 1, 1 space
+                    if ((column % 2 == 0) ^ !(row % 2 == 0)) { // this should not be the case on the leftmost 1, 1 space
                         spaceString += "\u001b[107;1m"; //101 is light red
                     } else {
                         spaceString += "\u001b[40;1m"; //104 is light blue
