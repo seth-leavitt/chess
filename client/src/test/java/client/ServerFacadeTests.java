@@ -2,6 +2,8 @@
 package client;
 
 import client.responses.LoginResponse;
+import client.responses.LogoutResponse;
+import client.responses.RegisterResponse;
 import org.junit.jupiter.api.*;
 import server.Server;
 
@@ -113,5 +115,97 @@ public class ServerFacadeTests {
 
         assertThrows(IOException.class, () ->
                 facade.login("testUser", null));
+    }
+
+    @Test
+    public void registerSuccess() throws IOException {
+        RegisterResponse response =
+                facade.register("testUser", "testPassword");
+
+        assertNotNull(response);
+        assertEquals("testUser", response.username());
+        assertNotNull(response.authToken());
+        assertFalse(response.authToken().isBlank());
+
+        LoginResponse loginResponse =
+                facade.login("testUser", "testPassword");
+
+        assertEquals("testUser", loginResponse.getUsername());
+
+        HttpURLConnection connection = openConnection("/game", "GET");
+        connection.setRequestProperty("Authorization", response.authToken());
+
+        try {
+            assertEquals(200, connection.getResponseCode());
+        } finally {
+            connection.disconnect();
+        }
+    }
+
+    @Test
+    public void registerExistingUsername() throws IOException {
+        registerTestUser();
+
+        assertThrows(IOException.class, () ->
+                facade.register("testUser", "anotherPassword"));
+    }
+
+    @Test
+    public void registerMissingUsername() {
+        assertThrows(IOException.class, () ->
+                facade.register(null, "testPassword"));
+    }
+
+    @Test
+    public void registerMissingPassword() {
+        assertThrows(IOException.class, () ->
+                facade.register("testUser", null));
+    }
+
+    @Test
+    public void logoutSuccess() throws IOException {
+        registerTestUser();
+
+        LoginResponse loginResponse =
+                facade.login("testUser", "testPassword");
+
+        LogoutResponse response =
+                facade.logout(loginResponse.getAuthToken());
+
+        assertNotNull(response);
+
+        HttpURLConnection connection = openConnection("/game", "GET");
+        connection.setRequestProperty("Authorization", loginResponse.getAuthToken());
+
+        try {
+            assertEquals(401, connection.getResponseCode());
+        } finally {
+            connection.disconnect();
+        }
+    }
+
+    @Test
+    public void logoutInvalidToken() {
+        assertThrows(IOException.class, () ->
+                facade.logout("invalidToken"));
+    }
+
+    @Test
+    public void logoutMissingToken() {
+        assertThrows(IOException.class, () ->
+                facade.logout(null));
+    }
+
+    @Test
+    public void logoutAlreadyLoggedOut() throws IOException {
+        registerTestUser();
+
+        LoginResponse response =
+                facade.login("testUser", "testPassword");
+
+        facade.logout(response.getAuthToken());
+
+        assertThrows(IOException.class, () ->
+                facade.logout(response.getAuthToken()));
     }
 }
