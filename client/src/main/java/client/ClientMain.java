@@ -1,7 +1,7 @@
 package client;
 
 import chess.*;
-import client.responses.ListGamesResponse;
+import model.GameSummary;
 import ui.ChessBoardRenderer;
 
 import java.io.IOException;
@@ -26,33 +26,7 @@ public class ClientMain {
             boolean loggedIn = authToken != null;
 
             try {
-                switch (line) {
-                    case "help" -> help(loggedIn);
-                    case "quit" -> quit(loggedIn);
-                    case "login", "register" -> {
-                        if(loggedIn){
-                            System.out.println("Please log out first.");
-                        } else if(line.equals("login")){
-                            login();
-                        } else {
-                            register();
-                        }
-                    }
-                    case "logout", "create", "list", "play", "observe" -> {
-                        if(!loggedIn){
-                            System.out.println("Please log in first.");
-                        } else {
-                            switch (line){
-                                case "logout" -> logout();
-                                case "create" -> createGame();
-                                case "list" -> listGames();
-                                case "play" -> playGame();
-                                case "observe" -> observeGame();
-                            }
-                        }
-                    }
-                    default -> System.out.println("Unknown command. Type help to see available commands.");
-                }
+                executeCommand(line, loggedIn);
             } catch (IOException ex){
                 System.out.println("Could not complete " + line + ". Check your information and make sure the server is running.");
             } catch (IllegalArgumentException ex){
@@ -60,6 +34,29 @@ public class ClientMain {
             } catch (NoSuchElementException ex){
                 break;
             }
+        }
+    }
+
+    private static void executeCommand(String line, boolean loggedIn) throws IOException {
+        if(loggedIn && (line.equals("login") || line.equals("register"))){
+            System.out.println("Please log out first.");
+            return;
+        }
+        if(!loggedIn && List.of("logout", "create", "list", "play", "observe").contains(line)){
+            System.out.println("Please log in first.");
+            return;
+        }
+        switch (line){
+            case "help" -> help(loggedIn);
+            case "quit" -> quit(loggedIn);
+            case "login" -> login();
+            case "register" -> register();
+            case "logout" -> logout();
+            case "create" -> createGame();
+            case "list" -> listGames();
+            case "play" -> playGame();
+            case "observe" -> observeGame();
+            default -> System.out.println("Unknown command. Type help to see available commands.");
         }
     }
 
