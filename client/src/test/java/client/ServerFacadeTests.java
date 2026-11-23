@@ -9,6 +9,7 @@ import client.responses.LoginResponse;
 import client.responses.LogoutResponse;
 import client.responses.RegisterResponse;
 import org.junit.jupiter.api.*;
+import model.GameSummary;
 import server.Server;
 
 import java.io.IOException;
@@ -124,12 +125,12 @@ public class ServerFacadeTests {
     @Test
     public void registerSuccess() throws IOException {
         RegisterResponse response =
-                facade.register("testUser", "testPassword");
+                facade.register("testUser", "testPassword", "testEmail");
 
         assertNotNull(response);
-        assertEquals("testUser", response.username());
-        assertNotNull(response.authToken());
-        assertFalse(response.authToken().isBlank());
+        assertEquals("testUser", response.getUsername());
+        assertNotNull(response.getAuthToken());
+        assertFalse(response.getAuthToken().isBlank());
 
         LoginResponse loginResponse =
                 facade.login("testUser", "testPassword");
@@ -137,7 +138,7 @@ public class ServerFacadeTests {
         assertEquals("testUser", loginResponse.getUsername());
 
         HttpURLConnection connection = openConnection("/game", "GET");
-        connection.setRequestProperty("Authorization", response.authToken());
+        connection.setRequestProperty("Authorization", response.getAuthToken());
 
         try {
             assertEquals(200, connection.getResponseCode());
@@ -151,19 +152,19 @@ public class ServerFacadeTests {
         registerTestUser();
 
         assertThrows(IOException.class, () ->
-                facade.register("testUser", "anotherPassword"));
+                facade.register("testUser", "anotherPassword", "email"));
     }
 
     @Test
     public void registerMissingUsername() {
         assertThrows(IOException.class, () ->
-                facade.register(null, "testPassword"));
+                facade.register(null, "testPassword", "email"));
     }
 
     @Test
     public void registerMissingPassword() {
         assertThrows(IOException.class, () ->
-                facade.register("testUser", null));
+                facade.register("testUser", null, "email"));
     }
 
     @Test
@@ -215,15 +216,15 @@ public class ServerFacadeTests {
 
     @Test
     public void createGameSuccess() throws IOException {
-        RegisterResponse user = facade.register("testUser", "testPassword");
+        RegisterResponse user = facade.register("testUser", "testPassword", "veryCoolEmail");
 
         CreateGameResponse response =
-                facade.createGame(user.authToken(), "testGame");
+                facade.createGame(user.getAuthToken(), "testGame");
 
         assertNotNull(response);
         assertTrue(response.getGameID() > 0);
 
-        var games = facade.listGames(user.authToken()).getGames();
+        var games = facade.listGames(user.getAuthToken()).getGames();
 
         assertEquals(1, games.size());
         assertEquals(response.getGameID(), games.get(0).getGameID());
@@ -240,17 +241,17 @@ public class ServerFacadeTests {
 
     @Test
     public void createGameMissingName() throws IOException {
-        RegisterResponse user = facade.register("testUser", "testPassword");
+        RegisterResponse user = facade.register("testUser", "testPassword", "anotherCoolEmail");
 
         assertThrows(IOException.class, () ->
-                facade.createGame(user.authToken(), null));
+                facade.createGame(user.getAuthToken(), null));
     }
 
     @Test
     public void listGamesEmpty() throws IOException {
-        RegisterResponse user = facade.register("testUser", "testPassword");
+        RegisterResponse user = facade.register("testUser", "testPassword", "soManyEmails");
 
-        ListGamesResponse response = facade.listGames(user.authToken());
+        ListGamesResponse response = facade.listGames(user.getAuthToken());
 
         assertNotNull(response);
         assertNotNull(response.getGames());
@@ -259,21 +260,28 @@ public class ServerFacadeTests {
 
     @Test
     public void listGamesSuccess() throws IOException {
-        RegisterResponse user = facade.register("testUser", "testPassword");
-        CreateGameResponse first = facade.createGame(user.authToken(), "firstGame");
-        CreateGameResponse second = facade.createGame(user.authToken(), "secondGame");
-        facade.joinGame(user.authToken(), ChessGame.TeamColor.WHITE, first.getGameID());
+        RegisterResponse user = facade.register("testUser", "testPassword", "there are lots of emails");
+        CreateGameResponse first = facade.createGame(user.getAuthToken(), "firstGame");
+        CreateGameResponse second = facade.createGame(user.getAuthToken(), "secondGame");
+        facade.joinGame(user.getAuthToken(), ChessGame.TeamColor.WHITE, first.getGameID());
 
-        ListGamesResponse response = facade.listGames(user.authToken());
+        ListGamesResponse response = facade.listGames(user.getAuthToken());
 
         assertNotNull(response);
         assertEquals(2, response.getGames().size());
 
-        var firstGame = response.getGames().stream()
-                .filter(game -> game.getGameID() == first.getGameID()).findFirst().orElseThrow();
-        var secondGame = response.getGames().stream()
-                .filter(game -> game.getGameID() == second.getGameID()).findFirst().orElseThrow();
+        GameSummary firstGame = null;
+        GameSummary secondGame = null;
+        for (GameSummary game : response.getGames()){
+            if (game.getGameID() == first.getGameID()){
+                firstGame = game;
+            } else if (game.getGameID() == second.getGameID()){
+                secondGame = game;
+            }
+        }
 
+        assertNotNull(firstGame);
+        assertNotNull(secondGame);
         assertEquals("firstGame", firstGame.getGameName());
         assertEquals("testUser", firstGame.getWhiteUsername());
         assertNull(firstGame.getBlackUsername());
@@ -290,19 +298,19 @@ public class ServerFacadeTests {
 
     @Test
     public void joinGameSuccess() throws IOException {
-        RegisterResponse white = facade.register("whiteUser", "testPassword");
-        RegisterResponse black = facade.register("blackUser", "testPassword");
-        CreateGameResponse game = facade.createGame(white.authToken(), "testGame");
+        RegisterResponse white = facade.register("whiteUser", "testPassword", "email1");
+        RegisterResponse black = facade.register("blackUser", "testPassword", "email2");
+        CreateGameResponse game = facade.createGame(white.getAuthToken(), "testGame");
 
         JoinGameResponse whiteResponse =
-                facade.joinGame(white.authToken(), ChessGame.TeamColor.WHITE, game.getGameID());
+                facade.joinGame(white.getAuthToken(), ChessGame.TeamColor.WHITE, game.getGameID());
         JoinGameResponse blackResponse =
-                facade.joinGame(black.authToken(), ChessGame.TeamColor.BLACK, game.getGameID());
+                facade.joinGame(black.getAuthToken(), ChessGame.TeamColor.BLACK, game.getGameID());
 
         assertNotNull(whiteResponse);
         assertNotNull(blackResponse);
 
-        var listedGame = facade.listGames(white.authToken()).getGames().get(0);
+        var listedGame = facade.listGames(white.getAuthToken()).getGames().get(0);
 
         assertEquals(game.getGameID(), listedGame.getGameID());
         assertEquals("whiteUser", listedGame.getWhiteUsername());
@@ -311,52 +319,52 @@ public class ServerFacadeTests {
 
     @Test
     public void joinGameInvalidToken() throws IOException {
-        RegisterResponse user = facade.register("testUser", "testPassword");
-        CreateGameResponse game = facade.createGame(user.authToken(), "testGame");
+        RegisterResponse user = facade.register("testUser", "testPassword", "email");
+        CreateGameResponse game = facade.createGame(user.getAuthToken(), "testGame");
 
         assertThrows(IOException.class, () ->
                 facade.joinGame("invalidToken", ChessGame.TeamColor.WHITE, game.getGameID()));
 
-        var listedGame = facade.listGames(user.authToken()).getGames().get(0);
+        var listedGame = facade.listGames(user.getAuthToken()).getGames().get(0);
         assertNull(listedGame.getWhiteUsername());
     }
 
     @Test
     public void joinGameNonexistentGame() throws IOException {
-        RegisterResponse user = facade.register("testUser", "testPassword");
+        RegisterResponse user = facade.register("testUser", "testPassword", "anotherEmail");
 
         assertThrows(IOException.class, () ->
-                facade.joinGame(user.authToken(), ChessGame.TeamColor.WHITE, -1));
+                facade.joinGame(user.getAuthToken(), ChessGame.TeamColor.WHITE, -1));
     }
 
     @Test
     public void joinGameMissingColor() throws IOException {
-        RegisterResponse user = facade.register("testUser", "testPassword");
-        CreateGameResponse game = facade.createGame(user.authToken(), "testGame");
+        RegisterResponse user = facade.register("testUser", "testPassword", "email");
+        CreateGameResponse game = facade.createGame(user.getAuthToken(), "testGame");
 
         assertThrows(IOException.class, () ->
-                facade.joinGame(user.authToken(), null, game.getGameID()));
+                facade.joinGame(user.getAuthToken(), null, game.getGameID()));
     }
 
     @Test
     public void joinGameMissingGameID() throws IOException {
-        RegisterResponse user = facade.register("testUser", "testPassword");
+        RegisterResponse user = facade.register("testUser", "testPassword", "IHopeTheseTestsStillPass");
 
         assertThrows(IOException.class, () ->
-                facade.joinGame(user.authToken(), ChessGame.TeamColor.WHITE, null));
+                facade.joinGame(user.getAuthToken(), ChessGame.TeamColor.WHITE, null));
     }
 
     @Test
     public void joinGameColorTaken() throws IOException {
-        RegisterResponse first = facade.register("firstUser", "testPassword");
-        RegisterResponse second = facade.register("secondUser", "testPassword");
-        CreateGameResponse game = facade.createGame(first.authToken(), "testGame");
-        facade.joinGame(first.authToken(), ChessGame.TeamColor.WHITE, game.getGameID());
+        RegisterResponse first = facade.register("firstUser", "testPassword", "email");
+        RegisterResponse second = facade.register("secondUser", "testPassword", "testEmail");
+        CreateGameResponse game = facade.createGame(first.getAuthToken(), "testGame");
+        facade.joinGame(first.getAuthToken(), ChessGame.TeamColor.WHITE, game.getGameID());
 
         assertThrows(IOException.class, () ->
-                facade.joinGame(second.authToken(), ChessGame.TeamColor.WHITE, game.getGameID()));
+                facade.joinGame(second.getAuthToken(), ChessGame.TeamColor.WHITE, game.getGameID()));
 
-        var listedGame = facade.listGames(first.authToken()).getGames().get(0);
+        var listedGame = facade.listGames(first.getAuthToken()).getGames().get(0);
         assertEquals("firstUser", listedGame.getWhiteUsername());
         assertNull(listedGame.getBlackUsername());
     }
