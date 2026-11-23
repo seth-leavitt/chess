@@ -21,7 +21,7 @@ public class MemoryDataAccess implements DataAccess {
         if (getUser(userData.getUsername()) != null){
             throw new DataAccessException("User Already Exists");
         }
-        UserData hashedUserData = new UserData(userData.getUsername(), BCrypt.hashpw(userData.getPassword(), BCrypt.gensalt()));
+        UserData hashedUserData = new UserData(userData.getUsername(), BCrypt.hashpw(userData.getPassword(), BCrypt.gensalt()), userData.getEmail());
         users.put(userData.getUsername(), hashedUserData);
         return loginUser(userData);
     }

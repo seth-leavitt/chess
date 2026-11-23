@@ -35,7 +35,7 @@ public class DatabaseDataAccessTest {
 
     @Test
     void registerStoresUserAndReturnsToken() throws DataAccessException {
-        UserData user = new UserData("username", "password");
+        UserData user = new UserData("username", "password", "email");
 
         AuthData authData = da.registerUser(user);
 
@@ -53,17 +53,17 @@ public class DatabaseDataAccessTest {
 
     @Test
     void registeringDuplicateUsernameThrows() throws DataAccessException {
-        da.registerUser(new UserData("username", "original"));
+        da.registerUser(new UserData("username", "original", "originalEmail"));
 
         assertThrows(DataAccessException.class,
-                () -> da.registerUser(new UserData("username", "different")));
+                () -> da.registerUser(new UserData("username", "different", "different")));
 
         assertTrue(BCrypt.checkpw("original", da.getUser("username").getPassword()));
     }
 
     @Test
     void loginReturnsNewStoredToken() throws DataAccessException {
-        UserData user = new UserData("username", "password");
+        UserData user = new UserData("username", "password", "different");
         AuthData registration = da.registerUser(user);
 
         AuthData login = da.loginUser(user);
@@ -83,13 +83,13 @@ public class DatabaseDataAccessTest {
     @Test
     void loginForUnknownUserThrows() {
         assertThrows(DataAccessException.class,
-                () -> da.loginUser(new UserData("nobody", "password")));
+                () -> da.loginUser(new UserData("nobody", "password", "nonExisgtentEmail")));
     }
 
     @Test
     void getAuthByTokenReturnsCorrectAuth() throws DataAccessException {
-        AuthData first = da.registerUser(new UserData("first", "password"));
-        AuthData second = da.registerUser(new UserData("second", "password"));
+        AuthData first = da.registerUser(new UserData("first", "password", "email"));
+        AuthData second = da.registerUser(new UserData("second", "password", "email"));
 
         AuthData savedAuth = da.getAuthByToken(second.getAuthToken());
 
@@ -107,7 +107,7 @@ public class DatabaseDataAccessTest {
 
     @Test
     void logoutRevokesOnlyRequestedToken() throws DataAccessException {
-        UserData user = new UserData("username", "password");
+        UserData user = new UserData("username", "password", "email");
         AuthData registration = da.registerUser(user);
         AuthData login = da.loginUser(user);
 
@@ -127,8 +127,8 @@ public class DatabaseDataAccessTest {
 
     @Test
     void getUserReturnsCorrectUser() throws DataAccessException {
-        da.registerUser(new UserData("first", "first-password"));
-        da.registerUser(new UserData("second", "second-password"));
+        da.registerUser(new UserData("first", "first-password", "firstEmail"));
+        da.registerUser(new UserData("second", "second-password", "secondEmail"));
 
         UserData savedUser = da.getUser("second");
 
@@ -225,7 +225,7 @@ public class DatabaseDataAccessTest {
 
     @Test
     void dataPersistsAcrossDAOInstances() throws DataAccessException {
-        AuthData authData = da.registerUser(new UserData("username", "password"));
+        AuthData authData = da.registerUser(new UserData("username", "password", "email"));
         int gameID = da.addGame("Persistent game", new ChessGame());
 
         DatabaseDataAccess other = new DatabaseDataAccess();

@@ -20,9 +20,7 @@ public class DatabaseManager {
         loadPropertiesFromResources();
     }
 
-    /**
-     * Creates the database if it does not already exist.
-     */
+    // Creates the database if it does not already exist.
     static public void createDatabase() throws DataAccessException {
         var statement = "CREATE DATABASE IF NOT EXISTS " + databaseName;
         try (var conn = DriverManager.getConnection(connectionUrl, dbUsername, dbPassword);
@@ -33,22 +31,23 @@ public class DatabaseManager {
         }
     }
 
-    static void storeUserPassword(String username, String clearTextPassword) throws DataAccessException {
+    static void storeUserPassword(String username, String clearTextPassword, String email) throws DataAccessException {
         String hashedPassword = BCrypt.hashpw(clearTextPassword, BCrypt.gensalt());
 
         // Write the hashed password to the database along with the user's other information
-        writeHashedPasswordToDatabase(username, hashedPassword);
+        writeHashedPasswordToDatabase(username, hashedPassword, email);
     }
 
-    static void writeHashedPasswordToDatabase(String username, String hashedPassword) throws DataAccessException {
+    static void writeHashedPasswordToDatabase(String username, String hashedPassword, String email) throws DataAccessException {
 
-        var statement = "INSERT INTO users (username, password) VALUES (?, ?)";
+        var statement = "INSERT INTO users (username, password, email) VALUES (?, ?, ?)";
 
         try (var conn = getConnection();
              var preparedStatement = conn.prepareStatement(statement)) {
 
             preparedStatement.setString(1, username);
             preparedStatement.setString(2, hashedPassword);
+            preparedStatement.setString(3, email);
             preparedStatement.executeUpdate();
 
         } catch (SQLException ex) {
@@ -57,18 +56,6 @@ public class DatabaseManager {
         }
     }
 
-    /**
-     * Create a connection to the database and sets the catalog based upon the
-     * properties specified in db.properties. Connections to the database should
-     * be short-lived, and you must close the connection when you are done with it.
-     * The easiest way to do that is with a try-with-resource block.
-     * <br/>
-     * <code>
-     * try (var conn = DatabaseManager.getConnection()) {
-     * // execute SQL statements.
-     * }
-     * </code>
-     */
     static Connection getConnection() throws DataAccessException {
         try {
             //do not wrap the following line with a try-with-resources

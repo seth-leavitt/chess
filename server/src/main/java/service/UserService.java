@@ -20,13 +20,13 @@ public class UserService {
     }
 
     public RegistrationResult register(RegistrationRequest request) throws DataAccessException{
-        if (request == null || request.getUsername() == null || request.getPassword() == null) {
-            throw new ServiceException(400, "Username and password are required");
+        if (request == null || request.getUsername() == null || request.getPassword() == null || request.getEmail() == null) {
+            throw new ServiceException(400, "Username and password and email are required");
         }
         if (dataAccess.getUser(request.getUsername()) != null) {
             throw new ServiceException(403, "Username already taken");
         }
-        UserData user = new UserData(request.getUsername(), request.getPassword());
+        UserData user = new UserData(request.getUsername(), request.getPassword(), request.getEmail());
         AuthData authData = dataAccess.registerUser(user);
         return new RegistrationResult(authData);
     }

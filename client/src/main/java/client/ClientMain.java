@@ -105,7 +105,7 @@ public class ClientMain {
     public static void register() throws IOException {
         String username = prompt("Username:");
         String password = prompt("Password:");
-        String email = prompt("Password:");
+        String email = prompt("Email:");
         var response = FACADE.register(username, password, email);
         authToken = response.getAuthToken();
         System.out.println("Welcome, " + response.getUsername() + "!");

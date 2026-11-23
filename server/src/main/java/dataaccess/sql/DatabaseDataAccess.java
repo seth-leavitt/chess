@@ -24,7 +24,8 @@ public class DatabaseDataAccess implements DataAccess {
         var statement = """
             CREATE TABLE IF NOT EXISTS users (
                 username VARCHAR(255) PRIMARY KEY,
-                password VARCHAR(255) NOT NULL
+                password VARCHAR(255) NOT NULL,
+                email VARCHAR(255) NOT NULL
             )
             """;
 
@@ -66,8 +67,9 @@ public class DatabaseDataAccess implements DataAccess {
     public AuthData registerUser(UserData user) throws DataAccessException {
         String clearTextPassword = user.getPassword();
         String username = user.getUsername();
+        String email = user.getEmail();
 
-        DatabaseManager.storeUserPassword(username, clearTextPassword);
+        DatabaseManager.storeUserPassword(username, clearTextPassword, email);
 
         return loginUser(user);
     }
@@ -130,7 +132,7 @@ public class DatabaseDataAccess implements DataAccess {
 
     @Override
     public UserData getUser(String username) throws DataAccessException {
-        var statement = "SELECT username, password FROM users WHERE username = ?";
+        var statement = "SELECT username, password, email FROM users WHERE username = ?";
 
         try (var connection = DatabaseManager.getConnection();
              var preparedStatement = connection.prepareStatement(statement)) {
@@ -141,7 +143,8 @@ public class DatabaseDataAccess implements DataAccess {
                 if (rs.next()) {
                     return new UserData(
                             rs.getString("username"),
-                            rs.getString("password"));
+                            rs.getString("password"),
+                            rs.getString("email"));
                 }
                 return null;
             }

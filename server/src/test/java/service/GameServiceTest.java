@@ -23,7 +23,7 @@ class GameServiceTest {
     void setup() throws DataAccessException {
         dataAccess = new MemoryDataAccess();
         service = new GameService(dataAccess);
-        authData = dataAccess.registerUser(new UserData("username", "password"));
+        authData = dataAccess.registerUser(new UserData("username", "password", "email"));
     }
 
     @Test
@@ -80,7 +80,7 @@ class GameServiceTest {
 
     @Test
     void listGamesIncludesOtherUsersGamesAndMetadata() throws DataAccessException {
-        AuthData otherUser = dataAccess.registerUser(new UserData("other", "password"));
+        AuthData otherUser = dataAccess.registerUser(new UserData("other", "password", "ivePutSoManyEmailsInNowItsGettingRidiculous"));
         int gameID = service.newGame(new CreateGameRequest(otherUser.getAuthToken(), "Other game")).getGameID();
 
         var games = service.listGames(new ListGamesRequest(authData.getAuthToken())).getGames();
@@ -115,7 +115,7 @@ class GameServiceTest {
     void joinPreservesGameAndOtherPlayer() throws DataAccessException {
         int gameID = service.newGame(new CreateGameRequest(authData.getAuthToken(), "Test game")).getGameID();
         ChessGame board = dataAccess.getGame(gameID).getGame();
-        AuthData otherUser = dataAccess.registerUser(new UserData("other", "password"));
+        AuthData otherUser = dataAccess.registerUser(new UserData("other", "password", "email"));
 
         service.joinGame(new JoinGameRequest(authData.getAuthToken(), ChessGame.TeamColor.WHITE, gameID));
         service.joinGame(new JoinGameRequest(otherUser.getAuthToken(), ChessGame.TeamColor.BLACK, gameID));

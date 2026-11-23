@@ -15,7 +15,7 @@ public class MemoryDataAccessTest {
     private MemoryDataAccess da;
     @Test
     void clear() throws DataAccessException {
-        AuthData authData = da.registerUser(new UserData("username", "password"));
+        AuthData authData = da.registerUser(new UserData("username", "password", "email"));
         var gameID = da.addGame("Test game", new ChessGame());
 
         da.clear();
@@ -23,7 +23,7 @@ public class MemoryDataAccessTest {
         assertNull(da.getUser("username"));
         assertNull(da.getAuthByToken(authData.getAuthToken()));
         assertNull(da.getGame(gameID));
-        assertNotNull(da.registerUser(new UserData("username", "password")));
+        assertNotNull(da.registerUser(new UserData("username", "password", "email")));
     }
 
     @BeforeEach
@@ -34,7 +34,7 @@ public class MemoryDataAccessTest {
     @Test
     void registerStoresUserAndReturnsToken() throws DataAccessException {
 
-        UserData user = new UserData("username", "password");
+        UserData user = new UserData("username", "password", "email");
 
         AuthData authData = da.registerUser(user);
 
@@ -52,11 +52,11 @@ public class MemoryDataAccessTest {
     @Test
     void registeringDuplicateUsernameThrows() throws DataAccessException {
         // Arrange: this username already exists
-        da.registerUser(new UserData("username", "original"));
+        da.registerUser(new UserData("username", "original", "email"));
 
         // Act + Assert
         assertThrows(DataAccessException.class, () -> {
-            da.registerUser(new UserData("username", "different"));
+            da.registerUser(new UserData("username", "different", "differentemail"));
         });
 
         // The failed registration should preserve the original user
@@ -66,8 +66,8 @@ public class MemoryDataAccessTest {
     @Test
     void getUserReturnsCorrectUser() throws DataAccessException {
         // Arrange
-        da.registerUser(new UserData("username", "first"));
-        da.registerUser(new UserData("username2", "second"));
+        da.registerUser(new UserData("username", "first", "fisrtEmail"));
+        da.registerUser(new UserData("username2", "second", "secondEmail"));
 
         // Act
         UserData user = da.getUser("username2");
@@ -87,7 +87,7 @@ public class MemoryDataAccessTest {
 
     @Test
     void sessionsRemainIndependentAndLogoutRevokesOnlyOne() throws DataAccessException {
-        UserData user = new UserData("username", "password");
+        UserData user = new UserData("username", "password", "email");
         AuthData registration = da.registerUser(user);
         AuthData login = da.loginUser(user);
 
@@ -106,7 +106,7 @@ public class MemoryDataAccessTest {
     @Test
     void loginForUnknownUserThrows() {
         assertThrows(DataAccessException.class,
-                () -> da.loginUser(new UserData("nobody", "password")));
+                () -> da.loginUser(new UserData("nobody", "password", "email")));
     }
 
     @Test

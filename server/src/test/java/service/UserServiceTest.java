@@ -45,7 +45,7 @@ class UserServiceTest {
 
     @Test
     void registerDuplicateUsernameThrows() throws DataAccessException {
-        dataAccess.registerUser(new UserData("username", "original"));
+        dataAccess.registerUser(new UserData("username", "original", "email"));
 
         assertThrows(DataAccessException.class, () -> {
             service.register(
@@ -80,7 +80,7 @@ class UserServiceTest {
 
     @Test
     void loginWithCorrectCredentialsSucceeds() throws DataAccessException {
-        dataAccess.registerUser(new UserData("username", "password"));
+        dataAccess.registerUser(new UserData("username", "password", "email"));
 
         var result = service.login(
                 new LoginRequest("username", "password"));
@@ -92,7 +92,7 @@ class UserServiceTest {
 
     @Test
     void loginWithWrongPasswordThrows() throws DataAccessException {
-        dataAccess.registerUser(new UserData("username", "correct"));
+        dataAccess.registerUser(new UserData("username", "correct", "email"));
 
         assertThrows(DataAccessException.class, () -> {
             service.login(new LoginRequest("username", "wrong"));
@@ -109,7 +109,7 @@ class UserServiceTest {
     @Test
     void eachLoginReturnsNewToken() throws DataAccessException {
         String registrationToken =
-                dataAccess.registerUser(new UserData("username", "password")).getAuthToken();
+                dataAccess.registerUser(new UserData("username", "password", "edgyEmail")).getAuthToken();
 
         var firstLogin =
                 service.login(new LoginRequest("username", "password"));
@@ -132,7 +132,7 @@ class UserServiceTest {
     @Test
     void logoutWithValidTokenSucceeds() throws DataAccessException {
         String token =
-                dataAccess.registerUser(new UserData("username", "password")).getAuthToken();
+                dataAccess.registerUser(new UserData("username", "password", "catLover21@outlook.com")).getAuthToken();
 
         var result = service.logout(new LogoutRequest(token));
 
@@ -153,7 +153,7 @@ class UserServiceTest {
     @Test
     void logoutTwiceFailsSecondTime() throws DataAccessException {
         String token =
-                dataAccess.registerUser(new UserData("username", "password")).getAuthToken();
+                dataAccess.registerUser(new UserData("username", "password", "catHater32@gmail.com")).getAuthToken();
 
         var firstLogout = service.logout(new LogoutRequest(token));
         var secondLogout = service.logout(new LogoutRequest(token));
@@ -165,7 +165,7 @@ class UserServiceTest {
     @Test
     void loggedOutUserCanCreateNewSession() throws DataAccessException {
         String originalToken =
-                dataAccess.registerUser(new UserData("username", "password")).getAuthToken();
+                dataAccess.registerUser(new UserData("username", "password", "crazyTrain")).getAuthToken();
 
         assertTrue(
                 service.logout(new LogoutRequest(originalToken))
