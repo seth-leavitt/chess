@@ -27,7 +27,7 @@ class UserServiceTest {
     @Test
     void registerStoresUserAndReturnsToken() throws DataAccessException {
         RegistrationRequest request =
-                new RegistrationRequest("username", "password");
+                new RegistrationRequest("username", "password", "email");
 
         var result = service.register(request);
 
@@ -49,7 +49,7 @@ class UserServiceTest {
 
         assertThrows(DataAccessException.class, () -> {
             service.register(
-                    new RegistrationRequest("username", "different"));
+                    new RegistrationRequest("username", "different", "email"));
         });
 
         assertEquals(
@@ -59,7 +59,7 @@ class UserServiceTest {
     @Test
     void registerMissingUsernameThrows() {
         RegistrationRequest request =
-                new RegistrationRequest(null, "password");
+                new RegistrationRequest(null, "password", "email");
 
         assertThrows(DataAccessException.class, () -> {
             service.register(request);
@@ -69,7 +69,7 @@ class UserServiceTest {
     @Test
     void registerMissingPasswordThrows() {
         RegistrationRequest request =
-                new RegistrationRequest("username", null);
+                new RegistrationRequest("username", null, "email");
 
         assertThrows(DataAccessException.class, () -> {
             service.register(request);
@@ -208,7 +208,7 @@ class UserServiceTest {
         UserService failingService = new UserService(failingDataAccess);
 
         assertSame(failure, assertThrows(DataAccessException.class,
-                () -> failingService.register(new RegistrationRequest("username", "password"))));
+                () -> failingService.register(new RegistrationRequest("username", "password", "email"))));
         assertSame(failure, assertThrows(DataAccessException.class,
                 () -> failingService.logout(new LogoutRequest("token"))));
     }
