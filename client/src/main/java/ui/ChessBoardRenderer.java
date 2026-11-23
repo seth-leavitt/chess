@@ -43,7 +43,7 @@ public class ChessBoardRenderer {
                     ChessPosition position = new ChessPosition(row, column);
                     ChessPiece piece = board.getPiece(position);
                     String spaceString = "";
-                    if ((column % 2 == 0) ^ !(row % 2 == 0)) { // this should not be the case on the leftmost 1, 1 space
+                    if ((column + row) % 2 != 0) { // this should not be the case on the leftmost 1, 1 space
                         spaceString += "\u001b[107;1m"; //101 is light red
                     } else {
                         spaceString += "\u001b[40;1m"; //104 is light blue
