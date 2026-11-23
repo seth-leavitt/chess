@@ -11,11 +11,13 @@ public class RegisterRequest {
         return username;
     }
 
+
     String password;
     String email;
 
-    public RegisterRequest(String username, String password){
+    public RegisterRequest(String username, String password, String email){
         this.password = password;
         this.username = username;
+        this.email = email;
     }
 }

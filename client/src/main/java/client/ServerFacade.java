@@ -202,7 +202,7 @@ public class ServerFacade {
         }
     }
 
-    public RegisterResponse register(String username, String password) throws IOException {
+    public RegisterResponse register(String username, String password, String email) throws IOException {
 // make connection
         HttpURLConnection connection = connect("/user");
 
@@ -211,7 +211,7 @@ public class ServerFacade {
             connection.setDoOutput(true);
             connection.setRequestProperty("Content-Type", "application/json");
 
-            RegisterRequest request = new RegisterRequest(username, password);
+            RegisterRequest request = new RegisterRequest(username, password, email);
             String jsonRequest = new Gson().toJson(request);
 
             // Send request
